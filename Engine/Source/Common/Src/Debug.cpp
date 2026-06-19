@@ -10,13 +10,10 @@
 #include <Common/IO.h>
 
 namespace Common {
-    void Debug::AssertImpl(const bool expression, const std::string& name, const std::string& file, const uint32_t line, const std::string& reason)
+    void Debug::AssertFailed(const char* name, const char* file, const uint32_t line, const std::string_view reason)
     {
         AutoCerrFlush;
 
-        if (expression) {
-            return;
-        }
         std::cerr << "Assert failed: " << name << ", " << file << ", " << line << newline;
         std::cerr << "Reason: " << reason << newline;
 

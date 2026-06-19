@@ -5,10 +5,11 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <cstdint>
 
-#define Assert(expression) Common::Debug::AssertImpl(expression, #expression, __FILE__, __LINE__)
-#define AssertWithReason(expression, reason) Common::Debug::AssertImpl(expression, #expression, __FILE__, __LINE__, reason)
+#define Assert(expression) Common::Debug::AssertImpl((expression), #expression, __FILE__, __LINE__)
+#define AssertWithReason(expression, reason) Common::Debug::AssertImpl((expression), #expression, __FILE__, __LINE__, (reason))
 #define Unimplement() Assert(false)
 #define QuickFail() Assert(false)
 #define QuickFailWithReason(reason) AssertWithReason(false, reason)
@@ -32,11 +33,23 @@
 namespace Common {
     class Debug {
     public:
-        static void AssertImpl(bool expression, const std::string& name, const std::string& file, uint32_t line, const std::string& reason = "");
+        // The passing case lives here and is inlined, so the optimizer can see through it: a compile-time-true
+        // condition folds away entirely, and a runtime one collapses to a single predicted-not-taken branch with no
+        // std::string construction and no heap allocation. Only an actual failure reaches the out-of-line cold path.
+        static void AssertImpl(bool expression, const char* name, const char* file, uint32_t line,
+            std::string_view reason = {})
+        {
+            if (expression) {
+                return;
+            }
+            AssertFailed(name, file, line, reason);
+        }
 
         ~Debug();
 
     private:
+        static void AssertFailed(const char* name, const char* file, uint32_t line, std::string_view reason);
+
         Debug();
     };
 

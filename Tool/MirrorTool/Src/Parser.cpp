@@ -464,6 +464,7 @@ namespace MirrorTool {
         std::vector<std::string> argumentStrs = {
             "-x", "c++",
             "-std=c++20",
+            "-DMIRROR_TOOL_PARSING=1",
 #if BUILD_CONFIG_DEBUG
             "-DBUILD_CONFIG_DEBUG=1",
 #else

@@ -6,38 +6,18 @@
 
 #include <string>
 
-// GCC and Clang in GNU mode predefine the bare macro `linux` as 1, which collides with the linux enumerators below.
-// Drop it so the lowercase enumerator stays valid; the canonical `__linux__` is unaffected.
-#ifdef linux
-#undef linux
+#define ARCH_X86 0
+#define ARCH_ARM 0
+
+#if defined(__x86_64__) || defined(_M_X64)
+#undef ARCH_X86
+#define ARCH_X86 1
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#undef ARCH_ARM
+#define ARCH_ARM 1
 #endif
 
 namespace Common {
-    enum class DevelopmentPlatform {
-        windows,
-        macos,
-        linux,
-        max
-    };
-
-    enum class TargetPlatform {
-        windows,
-        macos,
-        linux,
-        android,
-        ios,
-        xbox,
-        playStation,
-        nintendoSwitch,
-        max
-    };
-
-    enum class CpuArch {
-        x86,
-        x64,
-        max
-    };
-
     class PlatformUtils {
     public:
         static void SetEnvVar(const std::string& inKey, const std::string& inValue);

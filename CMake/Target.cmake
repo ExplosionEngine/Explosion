@@ -2,6 +2,7 @@ include(GenerateExportHeader)
 include(CMakePackageConfigHelpers)
 
 option(BUILD_TEST "Build unit tests" ON)
+option(BUILD_BENCHMARK "Build benchmarks" ON)
 
 set(GENERATED_DIR ${CMAKE_BINARY_DIR}/Generated CACHE PATH "" FORCE)
 set(GENERATED_API_HEADER_DIR ${GENERATED_DIR}/Api CACHE PATH "" FORCE)
@@ -16,6 +17,12 @@ if (${BUILD_TEST})
     add_compile_definitions(BUILD_TEST=1)
 else()
     add_compile_definitions(BUILD_TEST=0)
+endif()
+
+if (${BUILD_BENCHMARK})
+    add_compile_definitions(BUILD_BENCHMARK=1)
+else()
+    add_compile_definitions(BUILD_BENCHMARK=0)
 endif()
 
 if ("${SUB_PROJECT_NAME}" STREQUAL "")
@@ -379,7 +386,7 @@ endfunction()
 function(exp_add_library)
     set(options NOT_INSTALL)
     set(singleValueArgs NAME TYPE)
-    set(multiValueArgs SRC PRIVATE_INC PUBLIC_INC PRIVATE_LINK PUBLIC_LINK PRIVATE_LIB PUBLIC_LIB REFLECT)
+    set(multiValueArgs SRC PRIVATE_INC PUBLIC_INC PRIVATE_LINK PUBLIC_LINK PRIVATE_LIB PUBLIC_LIB PRIVATE_COMPILE_OPT PUBLIC_COMPILE_OPT REFLECT)
     cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if ("${arg_TYPE}" STREQUAL "SHARED")
@@ -447,6 +454,11 @@ function(exp_add_library)
         ${arg_NAME}
         PRIVATE ${arg_PRIVATE_LIB}
         PUBLIC ${arg_PUBLIC_LIB}
+    )
+    target_compile_options(
+        ${arg_NAME}
+        PRIVATE ${arg_PRIVATE_COMPILE_OPT}
+        PUBLIC ${arg_PUBLIC_COMPILE_OPT}
     )
 
     if ("${arg_TYPE}" STREQUAL "SHARED")
@@ -521,6 +533,30 @@ function(exp_add_test)
         NAME ${arg_NAME}
         COMMAND ${arg_NAME}
         WORKING_DIRECTORY $<TARGET_FILE_DIR:${arg_NAME}>
+    )
+endfunction()
+
+function(exp_add_benchmark)
+    if (NOT ${BUILD_BENCHMARK})
+        return()
+    endif()
+
+    set(options "")
+    set(singleValueArgs NAME)
+    set(multiValueArgs SRC INC LINK LIB DEP_TARGET RES REFLECT)
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    exp_add_executable(
+        NAME ${arg_NAME}
+        FOLDER Benchmark
+        SRC ${arg_SRC}
+        INC ${arg_INC}
+        LINK ${arg_LINK}
+        LIB Benchmark ${arg_LIB}
+        DEP_TARGET ${arg_DEP_TARGET}
+        RES ${arg_RES}
+        REFLECT ${arg_REFLECT}
+        NOT_INSTALL
     )
 endfunction()
 
