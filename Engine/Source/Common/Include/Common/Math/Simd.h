@@ -8,12 +8,18 @@
 
 #include <Common/Platform.h>
 
+// MirrorTool parses these headers only to harvest reflection metadata, and its libclang has no usable SSE2/NEON
+// intrinsic header (no clang resource headers on Linux, a version-mismatched arm_neon.h on macOS). Reflection needs the
+// declarations below but never the vectorized bodies, so under the parser we skip the intrinsic include and stand in a
+// scalar F32x4 instead; every real translation unit still takes the intrinsic backend.
+#if !defined(MIRROR_TOOL_PARSING)
 #if ARCH_X86
 #include <emmintrin.h>
 #elif ARCH_ARM
 #include <arm_neon.h>
 #else
 #error "The math SIMD backend supports only x86-64 (SSE2) and arm64 (NEON) targets"
+#endif
 #endif
 
 namespace Common {
@@ -31,7 +37,34 @@ namespace Common {
 // A thin, header-only wrapper over a 4-wide float SIMD register, mapping to the SSE2 baseline on x86-64 and to NEON on
 // arm64 (both always present, no extra flags). The math layer uses it to back the simd backend.
 namespace Common::Simd {
-#if ARCH_X86
+#if defined(MIRROR_TOOL_PARSING)
+    struct F32x4 { float lanes[4]; };
+
+    inline F32x4 LoadU(const float* p) { return { p[0], p[1], p[2], p[3] }; }
+    inline void StoreU(float* p, F32x4 v) { for (int i = 0; i < 4; i++) { p[i] = v.lanes[i]; } }
+    inline F32x4 Set1(float s) { return { s, s, s, s }; }
+    inline F32x4 Add(F32x4 a, F32x4 b) { return { a.lanes[0] + b.lanes[0], a.lanes[1] + b.lanes[1], a.lanes[2] + b.lanes[2], a.lanes[3] + b.lanes[3] }; }
+    inline F32x4 Sub(F32x4 a, F32x4 b) { return { a.lanes[0] - b.lanes[0], a.lanes[1] - b.lanes[1], a.lanes[2] - b.lanes[2], a.lanes[3] - b.lanes[3] }; }
+    inline F32x4 Mul(F32x4 a, F32x4 b) { return { a.lanes[0] * b.lanes[0], a.lanes[1] * b.lanes[1], a.lanes[2] * b.lanes[2], a.lanes[3] * b.lanes[3] }; }
+    inline F32x4 Div(F32x4 a, F32x4 b) { return { a.lanes[0] / b.lanes[0], a.lanes[1] / b.lanes[1], a.lanes[2] / b.lanes[2], a.lanes[3] / b.lanes[3] }; }
+    inline float Sum(F32x4 v) { return v.lanes[0] + v.lanes[1] + v.lanes[2] + v.lanes[3]; }
+    inline F32x4 Set(float x, float y, float z, float w) { return { x, y, z, w }; }
+
+    template <int L>
+    inline F32x4 Splat(F32x4 v) { return Set1(v.lanes[L]); }
+
+    template <int I0, int I1, int I2, int I3>
+    inline F32x4 Shuffle(F32x4 v) { return { v.lanes[I0], v.lanes[I1], v.lanes[I2], v.lanes[I3] }; }
+
+    inline void Transpose4(F32x4& r0, F32x4& r1, F32x4& r2, F32x4& r3)
+    {
+        const F32x4 s0 = r0, s1 = r1, s2 = r2, s3 = r3;
+        r0 = { s0.lanes[0], s1.lanes[0], s2.lanes[0], s3.lanes[0] };
+        r1 = { s0.lanes[1], s1.lanes[1], s2.lanes[1], s3.lanes[1] };
+        r2 = { s0.lanes[2], s1.lanes[2], s2.lanes[2], s3.lanes[2] };
+        r3 = { s0.lanes[3], s1.lanes[3], s2.lanes[3], s3.lanes[3] };
+    }
+#elif ARCH_X86
     using F32x4 = __m128;
 
     inline F32x4 LoadU(const float* p) { return _mm_loadu_ps(p); }
