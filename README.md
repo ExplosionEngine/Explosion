@@ -57,10 +57,6 @@ If the output not equals `/Applications/Xcode.app/Contents/Developer`, you need 
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 ```
 
-## Windows Notice
-
-Some third-party libraries managed by conan may fail to install or compile on Windows due to excessively long build tree paths. So you need to configure the environment variable `CONAN_HOME` and set it to a relatively short path, such as `C:\t`
-
 ## Build Project
 
 The following table contains supported platform, toolchain and generator:
@@ -91,6 +87,18 @@ The following table contains supported platform, toolchain and generator:
         <td rowspan="3">macOS</td>
         <td rowspan="3">arm64</td>
         <td rowspan="3">Apple Clang</td>
+        <td>Unix Makefiles</td>
+    </tr>
+    <tr>
+        <td>Ninja</td>
+    </tr>
+    <tr>
+        <td>Ninja Multi-Config</td>
+    </tr>
+    <tr>
+        <td rowspan="3">Linux</td>
+        <td rowspan="3">x64</td>
+        <td rowspan="3">GCC</td>
         <td>Unix Makefiles</td>
     </tr>
     <tr>
@@ -135,6 +143,7 @@ Thanks all those following projects:
 * [debugbreak](https://github.com/scottt/debugbreak)
 * [LLVM](https://llvm.org/)
 * [googletest](https://github.com/google/googletest)
+* [Google Benchmark](https://github.com/google/benchmark)
 * [taskflow](https://github.com/taskflow/taskflow)
 * [cityhash](https://github.com/google/cityhash)
 * [stb](https://github.com/nothings/stb)
@@ -150,10 +159,6 @@ Thanks all those following projects:
 * [HeroUI](https://www.heroui.com)
 * [TailWindCSS](https://tailwindcss.com)
 
-# Sponsor
-
-<img width="100dp" src=".github/resource/JetBrains.png" alt="JetBrains Open Source"/>
-
 # License
 
-[MIT](https://github.com/ExplosionEngine/Explosion/blob/master/LICENSE) @ Explosion Development Team All right Reserved 2025.
+[MIT](https://github.com/ExplosionEngine/Explosion/blob/master/LICENSE) @ Explosion Development Team All right Reserved 2026.
