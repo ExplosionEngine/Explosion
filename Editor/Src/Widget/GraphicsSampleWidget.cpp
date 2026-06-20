@@ -34,7 +34,7 @@ namespace Editor {
 
         {
             Render::ShaderCompileInput shaderCompileInput;
-            shaderCompileInput.source = Common::FileUtils::ReadTextFile("../Shader/Editor/GraphicsWindowSample.esl");
+            shaderCompileInput.source = Common::FileUtils::ReadTextFile("../Shader/Editor/GraphicsWindowSample.esl").Unwrap();
             shaderCompileInput.stage = RHI::ShaderStageBits::sVertex;
             shaderCompileInput.entryPoint = "VSMain";
             shaderCompileInput.includeDirectories.emplace_back("../Test/Sample/ShaderInclude");
@@ -43,7 +43,7 @@ namespace Editor {
 
         {
             Render::ShaderCompileInput shaderCompileInput;
-            shaderCompileInput.source = Common::FileUtils::ReadTextFile("../Shader/Editor/GraphicsWindowSample.esl");
+            shaderCompileInput.source = Common::FileUtils::ReadTextFile("../Shader/Editor/GraphicsWindowSample.esl").Unwrap();
             shaderCompileInput.stage = RHI::ShaderStageBits::sPixel;
             shaderCompileInput.entryPoint = "PSMain";
             shaderCompileInput.includeDirectories.emplace_back("../Test/Sample/ShaderInclude");

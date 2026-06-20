@@ -477,12 +477,12 @@ namespace Common {
     {
         rapidjson::Document document;
         JsonSerialize<T>(document, document.GetAllocator(), inValue);
-        FileUtils::WriteJsonFile(inFile, document, inPretty);
+        Assert(FileUtils::WriteJsonFile(inFile, document, inPretty).IsOk());
     }
 
     template <typename T> void JsonDeserializeFromFile(const std::string& inFile, T& outValue)
     {
-        const rapidjson::Document document = FileUtils::ReadJsonFile(inFile);
+        const rapidjson::Document document = FileUtils::ReadJsonFile(inFile).Unwrap();
         JsonDeserialize<T>(document, outValue);
     }
 

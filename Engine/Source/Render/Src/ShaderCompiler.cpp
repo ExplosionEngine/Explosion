@@ -414,7 +414,7 @@ namespace Render {
                 const auto stage = shaderType->GetStage();
                 const auto& entryPoint = shaderType->GetEntryPoint();
                 const auto& variantFields = shaderType->GetVariantFields();
-                const auto source = Common::FileUtils::ReadTextFile(sourceFile);
+                const auto source = Common::FileUtils::ReadTextFile(sourceFile).Unwrap();
 
                 Assert(!compileOutputs.contains(typeKey));
                 compileOutputs.emplace(std::make_pair(typeKey, std::unordered_map<ShaderVariantKey, std::future<ShaderCompileOutput>> {}));

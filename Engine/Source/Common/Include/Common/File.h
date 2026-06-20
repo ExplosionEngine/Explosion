@@ -8,12 +8,14 @@
 
 #include <rapidjson/document.h>
 
+#include <Common/Result.h>
+
 namespace Common {
     class FileUtils {
     public:
-        static std::string ReadTextFile(const std::string& inFileName);
-        static void WriteTextFile(const std::string& inFileName, const std::string& inContent);
-        static rapidjson::Document ReadJsonFile(const std::string& inFileName);
-        static void WriteJsonFile(const std::string& inFileName, const rapidjson::Document& inJsonDocument, bool inPretty = true);
+        static Result<std::string, std::string> ReadTextFile(const std::string& inFileName);
+        static Result<void, std::string> WriteTextFile(const std::string& inFileName, const std::string& inContent);
+        static Result<rapidjson::Document, std::string> ReadJsonFile(const std::string& inFileName);
+        static Result<void, std::string> WriteJsonFile(const std::string& inFileName, const rapidjson::Document& inJsonDocument, bool inPretty = true);
     };
 }
