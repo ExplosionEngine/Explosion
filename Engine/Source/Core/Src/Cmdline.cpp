@@ -24,7 +24,7 @@ namespace Core {
 
     Cli::~Cli() = default;
 
-    std::pair<bool, std::string> Cli::Parse(int argc, char* argv[], bool force)
+    Common::Result<void, std::string> Cli::Parse(int argc, char* argv[], bool force)
     {
         if (!force) {
             Assert(!parsed);
@@ -41,9 +41,9 @@ namespace Core {
         if (!clipp::parse(argc, argv, cli)) {
             std::stringstream stream;
             stream << clipp::make_man_page(cli, argv[0]);
-            return std::make_pair(false, stream.str());
+            return Common::Err(stream.str());
         }
-        return std::make_pair(true, "");
+        return Common::Ok();
     }
 
     CmdlineArg* Cli::FindArg(const std::string& name) const

@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include <Common/Utility.h>
+#include <Common/Result.h>
 
 #include <MirrorTool/Parser.h>
 
@@ -15,7 +16,7 @@ namespace MirrorTool {
 
     class Generator {
     public:
-        using Result = std::pair<bool, std::string>;
+        using Result = Common::Result<void, std::string>;
 
         NonCopyable(Generator)
         explicit Generator(std::string inInputFile, std::string inOutputFile, std::vector<std::string> inHeaderDirs, const MetaInfo& inMetaInfo, bool inDynamic);

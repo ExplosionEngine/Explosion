@@ -539,7 +539,7 @@ namespace MirrorTool {
         VisitChildren(OutermostVisitor, MetaInfo, cursor, metaInfo);
 
         Cleanup(index, translationUnit);
-        return std::make_pair(true, std::move(metaInfo));
+        return Common::Ok(std::move(metaInfo));
     }
 
     void Parser::Cleanup(CXIndex index, CXTranslationUnit translationUnit)
@@ -555,6 +555,6 @@ namespace MirrorTool {
     Parser::Result Parser::CleanUpAndConstructFailResult(CXIndex index, CXTranslationUnit translationUnit, std::string reason)
     {
         Cleanup(index, translationUnit);
-        return std::make_pair(false, std::move(reason));
+        return Common::Err(std::move(reason));
     }
 }

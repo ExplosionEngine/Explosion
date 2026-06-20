@@ -97,16 +97,16 @@ int main(int argc, char* argv[]) // NOLINT
     }
 
     MirrorTool::Parser parser(inputFile, headerDirs, frameworkDirs);
-    auto [parseSuccess, parseResultOrError] = parser.Parse();
-    if (!parseSuccess) {
-        outputErrorWithDebugContext(std::get<std::string>(parseResultOrError));
+    const auto parseResult = parser.Parse();
+    if (parseResult.IsErr()) {
+        outputErrorWithDebugContext(parseResult.Error());
         return 1;
     }
 
-    MirrorTool::Generator generator(inputFile, outputFile, headerDirs, std::get<MirrorTool::MetaInfo>(parseResultOrError), dynamic);
-    if (auto [generateSuccess, generateError] = generator.Generate();
-        !generateSuccess) {
-        outputErrorWithDebugContext(generateError);
+    MirrorTool::Generator generator(inputFile, outputFile, headerDirs, parseResult.Value(), dynamic);
+    if (const auto generateResult = generator.Generate();
+        generateResult.IsErr()) {
+        outputErrorWithDebugContext(generateResult.Error());
         return 1;
     }
     return 0;

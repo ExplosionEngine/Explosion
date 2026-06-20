@@ -6,12 +6,12 @@
 
 #include <vector>
 #include <string>
-#include <variant>
 #include <unordered_map>
 
 #include <clang-c/Index.h>
 
 #include <Common/Utility.h>
+#include <Common/Result.h>
 
 namespace MirrorTool {
     enum class FieldAccess : uint8_t {
@@ -91,7 +91,7 @@ namespace MirrorTool {
 
     class Parser {
     public:
-        using Result = std::pair<bool, std::variant<std::string, MetaInfo>>;
+        using Result = Common::Result<MetaInfo, std::string>;
 
         NonCopyable(Parser)
         explicit Parser(std::string inSourceFile, std::vector<std::string> inHeaderDirs, std::vector<std::string> inFrameworkDirs);

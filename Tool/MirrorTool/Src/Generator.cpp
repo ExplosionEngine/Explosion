@@ -456,12 +456,12 @@ namespace MirrorTool {
 
         std::ifstream inFile(inputFile);
         if (inFile.fail()) {
-            return std::make_pair(false, "failed to open input file");
+            return Common::Err<std::string>("failed to open input file");
         }
 
         std::ofstream outFile(outputFile);
         if (outFile.fail()) {
-            return std::make_pair(false, "failed to open output file");
+            return Common::Err<std::string>("failed to open output file");
         }
 
         auto result = GenerateCode(inFile, outFile, Common::HashUtils::CityHash(outputFile.data(), outputFile.size()));
@@ -473,7 +473,7 @@ namespace MirrorTool {
     {
         std::string bestMatchHeaderPath = GetBestMatchHeaderPath(inputFile, headerDirs);
         if (bestMatchHeaderPath.empty()) {
-            return std::make_pair(false, "failed to compute best match header path");
+            return Common::Err<std::string>("failed to compute best match header path");
         }
 
         outFile << GetHeaderNote() << Common::newline;
@@ -482,6 +482,6 @@ namespace MirrorTool {
         outFile << GetGlobalCode(metaInfo, uniqueId, dynamic);
         outFile << GetEnumsCode(metaInfo, uniqueId, dynamic);
         outFile << GetClassesCode(metaInfo, dynamic);
-        return std::make_pair(true, "");
+        return Common::Ok();
     }
 }
