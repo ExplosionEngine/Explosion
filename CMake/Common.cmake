@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ${EXPORT_COMPILE_COMMANDS})
 # position-independent or the shared link fails with "relocation ... can not be used when making a shared object".
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if (${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/Installed CACHE PATH "" FORCE)
 endif()
 
@@ -24,7 +24,7 @@ add_compile_definitions(
     COMPILER_GCC=$<IF:$<CXX_COMPILER_ID:GNU>,1,0>
 )
 
-if (${MSVC})
+if (MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
     add_compile_options(/bigobj)
     add_compile_definitions(

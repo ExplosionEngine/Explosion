@@ -1,8 +1,8 @@
 file(GLOB sources Src/*.cpp)
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+if (WIN32)
     set(platform_sources Src/Platform/Win32Surface.cpp)
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+elseif (APPLE)
     set(platform_sources Src/Platform/MacosSurface.mm)
     set(platform_ext_libs molten-vk::molten-vk "-framework Cocoa" "-framework IOKit" "-framework CoreFoundation")
 endif()
@@ -16,7 +16,7 @@ exp_add_library(
 )
 
 # .mm files can not perform unity build with .cpp files
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+if (APPLE)
     set_target_properties(
         RHI-Vulkan PROPERTIES
         UNITY_BUILD OFF)

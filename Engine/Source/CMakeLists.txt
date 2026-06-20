@@ -1,8 +1,8 @@
-if (${BUILD_TEST})
+if (BUILD_TEST)
     add_subdirectory(Test)
 endif()
 
-if (${BUILD_BENCHMARK})
+if (BUILD_BENCHMARK)
     add_subdirectory(Benchmark)
 endif()
 
@@ -13,7 +13,7 @@ add_subdirectory(Mirror)
 add_subdirectory(RHI)
 add_subdirectory(RHI-Dummy)
 add_subdirectory(RHI-Vulkan)
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+if (WIN32)
     add_subdirectory(RHI-DirectX12)
 endif()
 

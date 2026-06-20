@@ -7,7 +7,7 @@ set(QT_ROOT ${QT6_INSTALL_PREFIX})
 
 qt_standard_project_setup()
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+if (APPLE)
     set(platform_executable_hint MACOSX_BUNDLE)
     set(bundle_install_dest BUNDLE DESTINATION ${SUB_PROJECT_NAME}/Binaries)
     set(platform_fwk_dir ${QT_ROOT}/lib)
@@ -30,32 +30,20 @@ file(GLOB_RECURSE SOURCES Src/*.cpp)
 qt_add_executable(Editor ${platform_executable_hint} ${SOURCES} ${EDITOR_MIRROR_GENERATED_SRC})
 set_target_properties(Editor PROPERTIES FOLDER ${BASE_TARGETS_FOLDER})
 
-get_cmake_property(GENERATOR_IS_MULTI_CONFIG GENERATOR_IS_MULTI_CONFIG)
-if (${GENERATOR_IS_MULTI_CONFIG})
-    set_target_properties(
-        Editor PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/$<CONFIG>/${SUB_PROJECT_NAME}/Binaries
-    )
-else ()
-    set_target_properties(
-        Editor PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Dist/${SUB_PROJECT_NAME}/Binaries
-    )
-endif ()
+exp_get_runtime_output_dir(OUTPUT runtime_output_dir)
+set_target_properties(
+    Editor PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${runtime_output_dir}
+)
 
 target_include_directories(Editor PRIVATE Include)
 target_link_libraries(Editor PRIVATE ${editor_libs})
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    set(RHI_DEP_TARGETS RHI-DirectX12 RHI-Vulkan)
-else()
-    set(RHI_DEP_TARGETS RHI-Vulkan)
-endif()
-add_dependencies(Editor ${EDITOR_MIRROR_GENERATED_TARGET} ${RHI_DEP_TARGETS})
+add_dependencies(Editor ${EDITOR_MIRROR_GENERATED_TARGET} ${platform_rhi_targets})
 
 exp_process_runtime_dependencies(
     NAME Editor
-    DEP_TARGET ${RHI_DEP_TARGETS}
+    DEP_TARGET ${platform_rhi_targets}
 )
 install(
     TARGETS Editor
@@ -68,7 +56,7 @@ export(
     APPEND FILE ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Targets.cmake
 )
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+if (WIN32)
     set(qt_win_deploy_executable ${QT_ROOT}/bin/windeployqt.exe)
     add_custom_command(
         TARGET Editor POST_BUILD
@@ -77,7 +65,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     install(
         CODE "execute_process(COMMAND ${qt_win_deploy_executable} ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/$<TARGET_FILE_NAME:Editor>)"
     )
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+elseif (APPLE)
     set(qt_mac_deploy_executable ${QT_ROOT}/bin/macdeployqt)
     add_custom_command(
         TARGET Editor POST_BUILD
@@ -85,18 +73,6 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     )
     install(
         CODE "execute_process(COMMAND ${qt_mac_deploy_executable} ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/Editor.app -no-strip)"
-    )
-endif ()
-
-# TODO check is this need ?
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    foreach (rhi_dep_target ${RHI_DEP_TARGETS})
-        list(APPEND rhi_dep_target_copy_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${rhi_dep_target}> $<TARGET_FILE_DIR:Editor>/../Frameworks/$<TARGET_FILE_NAME:${rhi_dep_target}>)
-    endforeach ()
-
-    add_custom_command(
-        TARGET Editor POST_BUILD
-        ${rhi_dep_target_copy_commands}
     )
 endif ()
 
@@ -124,27 +100,15 @@ exp_add_resources_copy_command(
 # ---- end shaders -----------------------------------------------------------------------------------
 
 # ---- begin web project -----------------------------------------------------------------------------
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+if (WIN32)
     find_program(npm_executable NAMES npm.cmd npm REQUIRED NO_CACHE)
 else ()
     find_program(npm_executable NAMES npm REQUIRED NO_CACHE)
 endif ()
-message("Perform web project npm install......")
-execute_process(
-    COMMAND ${CMAKE_COMMAND} -E env ${npm_executable} install --no-fund --registry=https://registry.npmmirror.com
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Web
-    RESULT_VARIABLE npm_install_result
-    OUTPUT_VARIABLE npm_install_output
-    ERROR_VARIABLE npm_install_error
-)
-if (${npm_install_result} STREQUAL "0")
-    message(${npm_install_output})
-else ()
-    message(FATAL_ERROR ${npm_install_error})
-endif ()
 
 add_custom_target(
     Editor.Web
+    COMMAND ${CMAKE_COMMAND} -E env ${npm_executable} install --no-fund --registry=https://registry.npmmirror.com
     COMMAND ${CMAKE_COMMAND} -E env ${npm_executable} run build
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Web
     VERBATIM
@@ -156,7 +120,7 @@ add_custom_command(
     TARGET Editor.Web POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_SOURCE_DIR}/Web/dist $<TARGET_FILE_DIR:Editor>/Web
 )
-if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+if (NOT APPLE)
     install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_SOURCE_DIR}/Web/dist ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/Web)")
 endif ()
 # ---- end web project -------------------------------------------------------------------------------
