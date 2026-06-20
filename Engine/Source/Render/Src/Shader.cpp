@@ -152,7 +152,7 @@ namespace Render {
 
     void ShaderUtils::GatherShaderSources(std::unordered_map<std::string, std::string>& outFileAndSource, const std::string& inSourceFile, const std::vector<std::string>& inIncludeDirectories)
     {
-        const std::string text = Common::FileUtils::ReadTextFile(inSourceFile);
+        const std::string text = Common::FileUtils::ReadTextFile(inSourceFile).Unwrap();
         outFileAndSource.emplace(inSourceFile, text);
 
         for (const auto includes = Common::StringUtils::RegexSearch(text, "#include \\<.*\\>");

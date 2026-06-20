@@ -102,7 +102,7 @@ namespace Core {
                 continue;
             }
 
-            rapidjson::Document document = Common::FileUtils::ReadJsonFile(path.String());
+            rapidjson::Document document = Common::FileUtils::ReadJsonFile(path.String()).Unwrap();
             Assert(document.IsObject());
 
             for (auto iter = document.MemberBegin(); iter != document.MemberEnd(); ++iter) {

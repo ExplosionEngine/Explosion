@@ -121,10 +121,10 @@ void AssertNamespaceInfoEqual(const NamespaceInfo& lhs, const NamespaceInfo& rhs
 TEST(MirrorTest, ParserTest)
 {
     const Parser parser("../Test/Resource/Mirror/MirrorToolInput.h", { "../Test/Resource/Mirror" }, {});
-    auto [parseSuccess, parseResultOrError] = parser.Parse();
-    ASSERT_TRUE(parseSuccess);
+    const auto parseResult = parser.Parse();
+    ASSERT_TRUE(parseResult.IsOk());
 
-    const auto& [namespaces, global] = std::get<MetaInfo>(parseResultOrError);
+    const auto& [namespaces, global] = parseResult.Value();
     ASSERT_EQ(namespaces.size(), 0);
 
     NamespaceInfo predicatedGlobalNamespace = { "", "", {} };
@@ -161,12 +161,12 @@ TEST(MirrorTest, ParserTest)
 TEST(MirrorTest, GeneratorTest)
 {
     const Parser parser("../Test/Resource/Mirror/MirrorToolInput.h", { "../Test/Resource/Mirror" }, {});
-    auto [parseSuccess, parseResultOrError] = parser.Parse();
-    ASSERT_TRUE(parseSuccess);
+    const auto parseResult = parser.Parse();
+    ASSERT_TRUE(parseResult.IsOk());
 
-    const Generator generator("../Test/Resource/Mirror/MirrorToolInput.h", "../Test/Generated/Mirror/MirrorToolTest.generated.cpp", { "../" }, std::get<MetaInfo>(parseResultOrError), false);
-    auto [generateSuccess, generateResultOrError] = generator.Generate();
-    ASSERT_EQ(generateSuccess, true);
+    const Generator generator("../Test/Resource/Mirror/MirrorToolInput.h", "../Test/Generated/Mirror/MirrorToolTest.generated.cpp", { "../" }, parseResult.Value(), false);
+    const auto generateResult = generator.Generate();
+    ASSERT_TRUE(generateResult.IsOk());
 }
 
 int main(int argc, char* argv[])

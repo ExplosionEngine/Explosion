@@ -11,6 +11,7 @@
 
 #include <Core/Api.h>
 #include <Common/Debug.h>
+#include <Common/Result.h>
 
 namespace Core {
     class CORE_API CmdlineArg {
@@ -32,7 +33,7 @@ namespace Core {
         static Cli& Get();
         ~Cli();
 
-        std::pair<bool, std::string> Parse(int argc, char* argv[], bool force = false);
+        Common::Result<void, std::string> Parse(int argc, char* argv[], bool force = false);
         CmdlineArg* FindArg(const std::string& name) const;
         CmdlineArg& GetArg(const std::string& name) const;
 

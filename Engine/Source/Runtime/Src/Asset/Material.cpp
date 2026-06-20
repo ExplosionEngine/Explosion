@@ -250,8 +250,8 @@ namespace Runtime {
             !absoluteMaterialRootCacheDir.Exists()) {
             absoluteMaterialRootCacheDir.MakeDir();
         }
-        Common::FileUtils::WriteTextFile(Core::Paths::Translate(materialHintFile).Absolute().String(), "");
-        Common::FileUtils::WriteTextFile(Core::Paths::Translate(materialHeader).Absolute().String(), source);
+        Assert(Common::FileUtils::WriteTextFile(Core::Paths::Translate(materialHintFile).Absolute().String(), "").IsOk());
+        Assert(Common::FileUtils::WriteTextFile(Core::Paths::Translate(materialHeader).Absolute().String(), source).IsOk());
 
         shaderTypes.clear();
         for (const Render::VertexFactoryType* vertexFactoryType : Render::VertexFactoryTypeRegistry::Get().AllTypes()) {

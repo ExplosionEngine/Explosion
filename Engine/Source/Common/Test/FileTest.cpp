@@ -10,7 +10,21 @@ TEST(FileTest, ReadWriteTextFileTest)
 {
     static Common::Path file = "../Test/Generated/Common/ReadTextFileTest.txt";
 
-    Common::FileUtils::WriteTextFile(file.Absolute().String(), "hello");
-    const std::string content = Common::FileUtils::ReadTextFile(file.Absolute().String());
-    ASSERT_EQ(content, "hello");
+    ASSERT_TRUE(Common::FileUtils::WriteTextFile(file.Absolute().String(), "hello").IsOk());
+    const auto readResult = Common::FileUtils::ReadTextFile(file.Absolute().String());
+    ASSERT_TRUE(readResult.IsOk());
+    ASSERT_EQ(readResult.Value(), "hello");
+}
+
+TEST(FileTest, ReadMissingTextFileTest)
+{
+    const auto readResult = Common::FileUtils::ReadTextFile("../Test/Generated/Common/DoesNotExist.txt");
+    ASSERT_TRUE(readResult.IsErr());
+    ASSERT_FALSE(readResult.Error().empty());
+}
+
+TEST(FileTest, ReadMissingJsonFileTest)
+{
+    const auto readResult = Common::FileUtils::ReadJsonFile("../Test/Generated/Common/DoesNotExist.json");
+    ASSERT_TRUE(readResult.IsErr());
 }

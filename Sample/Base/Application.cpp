@@ -263,7 +263,7 @@ Camera& Application::GetCamera() const
 
 Application::ShaderCompileOutput Application::CompileShader(const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage, std::vector<std::string> includePaths) const
 {
-    std::string shaderSource = FileUtils::ReadTextFile(fileName);
+    std::string shaderSource = FileUtils::ReadTextFile(fileName).Unwrap();
 
     Render::ShaderCompileInput input;
     input.source = shaderSource;

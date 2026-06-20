@@ -46,7 +46,7 @@ namespace Runtime {
             return;
         }
 
-        const rapidjson::Document document = Common::FileUtils::ReadJsonFile(configPath.String());
+        const rapidjson::Document document = Common::FileUtils::ReadJsonFile(configPath.String()).Unwrap();
         Assert(document.IsObject());
         settingsMap.at(inClass).JsonDeserialize(document);
     }
@@ -68,7 +68,7 @@ namespace Runtime {
         settingsMap.at(inClass).JsonSerialize(document, document.GetAllocator());
 
         const auto configPath = Internal::GetConfigPathForSettings(inClass);
-        Common::FileUtils::WriteJsonFile(configPath.String(), document);
+        Assert(Common::FileUtils::WriteJsonFile(configPath.String(), document).IsOk());
     }
 
     void SettingsRegistry::SaveAllSettings() const
