@@ -17,7 +17,8 @@ exp_add_library(
     TYPE STATIC
     SRC ${sources}
     PUBLIC_INC Include
-    PUBLIC_LIB rapidjson debugbreak::debugbreak cityhash::cityhash Taskflow::Taskflow
+    PUBLIC_LIB rapidjson cityhash::cityhash
+    PRIVATE_LIB debugbreak::debugbreak
     PUBLIC_COMPILE_OPT ${math_public_compile_opt}
 )
 

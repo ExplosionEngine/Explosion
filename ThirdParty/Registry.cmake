@@ -1,5 +1,10 @@
 if (${USE_CONAN})
-    install(CODE "execute_process(COMMAND conan install ${CMAKE_SOURCE_DIR} -c tools.cmake.cmakedeps:new=will_break_next --deployer=full_deploy --output-folder=${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/ThirdParty)")
+    # Deploy the dependencies into the install tree so downstream projects (which take the else() branch below) can
+    # find_package() them. This must reuse the very host profile cmake-conan generated for the engine build: that
+    # profile pins compiler.cppstd to CMAKE_CXX_STANDARD, so resolving with the bare default profile instead would
+    # compute different package ids and fail the deploy - either as "invalid packages" where the default cppstd is
+    # lower than a dependency requires, or as a "missing binary" mismatch against the binaries already in the cache.
+    install(CODE "execute_process(COMMAND conan install ${CMAKE_SOURCE_DIR} --profile:host=default --profile:host=${CMAKE_BINARY_DIR}/conan_host_profile --profile:build=default -s build_type=Release -c tools.cmake.cmakedeps:new=will_break_next --deployer=full_deploy --output-folder=${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/ThirdParty COMMAND_ERROR_IS_FATAL ANY)")
 else ()
     set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${CMAKE_CURRENT_LIST_DIR}/../../ThirdParty")
 endif ()

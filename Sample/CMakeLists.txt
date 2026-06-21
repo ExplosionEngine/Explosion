@@ -4,15 +4,9 @@ function(add_sample)
     set(multiValueArgs SRC INC SHADER IMAGE MODEL)
     cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT ${BUILD_SAMPLE})
+    if (NOT BUILD_SAMPLE)
         return()
     endif ()
-
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        set(platform_dep_target RHI-DirectX12 RHI-Vulkan)
-    else()
-        set(platform_dep_target RHI-Vulkan)
-    endif()
 
     foreach(s ${arg_SHADER})
         set(path "${CMAKE_CURRENT_SOURCE_DIR}/${s}->../Test/Sample/${s}")
@@ -37,13 +31,13 @@ function(add_sample)
         SRC ${arg_SRC}
         INC ${arg_INC}
         LIB Sample-Base
-        DEP_TARGET ${platform_dep_target}
+        DEP_TARGET ${platform_rhi_targets}
         RES ${paths}
         NOT_INSTALL
     )
 endfunction()
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+if (APPLE)
     set(platform_ext_libs
         "-framework Cocoa"
         "-framework IOKit"

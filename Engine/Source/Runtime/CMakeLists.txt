@@ -5,7 +5,8 @@ exp_add_library(
     SRC ${sources}
     PUBLIC_INC Include
     REFLECT Include
-    PUBLIC_LIB Core Mirror Render assimp::assimp
+    PUBLIC_LIB Core Mirror Render
+    PRIVATE_LIB Taskflow::Taskflow
 )
 
 file(GLOB test_sources Test/*.cpp)
