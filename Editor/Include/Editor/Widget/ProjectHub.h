@@ -26,19 +26,31 @@ namespace Editor {
         EProperty() std::string path;
     };
 
+    struct EClass() CreateProjectResult {
+        EClassBody(CreateProjectResult)
+
+        EProperty() bool success;
+        EProperty() std::string error;
+        EProperty() std::string projectPath;
+    };
+
     class ProjectHubBackend final : public QObject {
         Q_OBJECT
         Q_PROPERTY(QString engineVersion READ GetEngineVersion CONSTANT)
         Q_PROPERTY(QJsonValue projectTemplates READ GetProjectTemplates CONSTANT)
-        Q_PROPERTY(QJsonValue recentProjects READ GetRecentProjects)
+        Q_PROPERTY(QJsonValue recentProjects READ GetRecentProjects NOTIFY RecentProjectsChanged)
 
     public:
         explicit ProjectHubBackend(ProjectHub* parent = nullptr);
         ~ProjectHubBackend() override;
 
     public Q_SLOTS:
-        void CreateProject() const;
+        QJsonValue CreateProject(const QString& inName, const QString& inDirectory, const QString& inTemplatePath);
+        void OpenProject(const QString& inProjectPath);
         QString BrowseDirectory() const;
+
+    Q_SIGNALS:
+        void RecentProjectsChanged();
 
     private:
         QString GetEngineVersion() const;
