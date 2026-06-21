@@ -13,6 +13,6 @@ find_package(Explosion REQUIRED)
 
 exp_add_executable(
     NAME Main
-    SRC Main.cpp
+    SRC Game/Src/Main.cpp
     LIB Explosion::Core
 )
