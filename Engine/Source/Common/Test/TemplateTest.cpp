@@ -14,7 +14,7 @@ TEST(TemplateTest, BasicSubstitutionTest)
     TemplateEngine engine;
     engine.Set("name", "Explosion").Set("version", "2");
 
-    const auto result = engine.Render("project({{name}} v{{version}})");
+    const auto result = engine.Render("project(@name@ v@version@)");
     ASSERT_TRUE(result.IsOk());
     ASSERT_EQ(result.Value(), "project(Explosion v2)");
 }
@@ -24,7 +24,7 @@ TEST(TemplateTest, WhitespaceInsideTagTest)
     TemplateEngine engine;
     engine.Set("name", "Explosion");
 
-    const auto result = engine.Render("{{ name }} and {{  name  }}");
+    const auto result = engine.Render("@ name @ and @  name  @");
     ASSERT_TRUE(result.IsOk());
     ASSERT_EQ(result.Value(), "Explosion and Explosion");
 }
@@ -34,7 +34,7 @@ TEST(TemplateTest, BatchSetTest)
     TemplateEngine engine;
     engine.Set({ { "a", "1" }, { "b", "2" } });
 
-    const auto result = engine.Render("{{a}}-{{b}}");
+    const auto result = engine.Render("@a@-@b@");
     ASSERT_TRUE(result.IsOk());
     ASSERT_EQ(result.Value(), "1-2");
 }
@@ -53,7 +53,7 @@ TEST(TemplateTest, UndefinedVariableErrorsTest)
     TemplateEngine engine;
     engine.Set("known", "ok");
 
-    const auto result = engine.Render("{{ known }}-{{ unknown }}");
+    const auto result = engine.Render("@ known @-@ unknown @");
     ASSERT_TRUE(result.IsErr());
     ASSERT_NE(result.Error().find("unknown"), std::string::npos);
 }
@@ -62,7 +62,7 @@ TEST(TemplateTest, UnterminatedTagErrorsTest)
 {
     TemplateEngine engine;
 
-    const auto result = engine.Render("unterminated {{ name");
+    const auto result = engine.Render("unterminated @ name");
     ASSERT_TRUE(result.IsErr());
 }
 
@@ -81,7 +81,7 @@ TEST(TemplateTest, RenderFileTest)
     static Common::Path srcFile = "../Test/Generated/Common/TemplateSource.txt";
     static Common::Path dstFile = "../Test/Generated/Common/TemplateOutput.txt";
 
-    ASSERT_TRUE(FileUtils::WriteTextFile(srcFile.Absolute().String(), "project({{name}})").IsOk());
+    ASSERT_TRUE(FileUtils::WriteTextFile(srcFile.Absolute().String(), "project(@name@)").IsOk());
 
     TemplateEngine engine;
     engine.Set("name", "Explosion");

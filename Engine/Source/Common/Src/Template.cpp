@@ -10,8 +10,10 @@
 #include <Common/File.h>
 
 namespace Common::Internal {
-    constexpr std::string_view openTag = "{{";
-    constexpr std::string_view closeTag = "}}";
+    // '@var@' placeholders mirror CMake's configure_file(@ONLY), so the same templates render identically here and
+    // CMake-side.
+    constexpr std::string_view openTag = "@";
+    constexpr std::string_view closeTag = "@";
 
     static std::string Trim(const std::string& inStr)
     {

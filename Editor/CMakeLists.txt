@@ -124,3 +124,22 @@ if (NOT APPLE)
     install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_SOURCE_DIR}/Web/dist ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/Web)")
 endif ()
 # ---- end web project -------------------------------------------------------------------------------
+
+# ---- begin test project ----------------------------------------------------------------------------
+# Render the Default project template into TestProject/ at configure time, so local and CI builds can build it
+# against the installed engine. The variable names must match the @placeholders@ in the template.
+set(projectName ExplosionTest)
+set(cmakeMinVersion 3.25)
+
+set(project_template_dir ${CMAKE_CURRENT_SOURCE_DIR}/Resource/ProjectTemplates/Default)
+set(test_project_dir ${CMAKE_SOURCE_DIR}/TestProject)
+file(GLOB_RECURSE project_template_files RELATIVE ${project_template_dir} ${project_template_dir}/*)
+foreach (template_file ${project_template_files})
+    if (template_file MATCHES "\\.tpl$")
+        string(REGEX REPLACE "\\.tpl$" "" rendered_file ${template_file})
+        configure_file(${project_template_dir}/${template_file} ${test_project_dir}/${rendered_file} @ONLY)
+    else ()
+        configure_file(${project_template_dir}/${template_file} ${test_project_dir}/${template_file} COPYONLY)
+    endif ()
+endforeach ()
+# ---- end test project ------------------------------------------------------------------------------

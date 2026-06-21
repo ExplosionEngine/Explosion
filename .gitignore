@@ -23,11 +23,8 @@ aqtinstall.log
 # Claude
 CLAUDE.md
 
-# Test Project
-TestProject/.idea
-TestProject/.vscode
-TestProject/cmake-build*
-TestProject/build*
+# Test Project (generated from the editor's Default project template by CI / tooling)
+/TestProject
 
 # macOS
 .DS_Store
