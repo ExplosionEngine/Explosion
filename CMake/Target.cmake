@@ -29,6 +29,17 @@ if ("${SUB_PROJECT_NAME}" STREQUAL "")
     message(FATAL_ERROR "SUB_PROJECT_NAME not defined, please set it in your project cmake")
 endif ()
 
+# The engine build includes this file directly and exports its targets so downstream projects can find_package() it.
+# Those downstream projects pull these helpers back in transitively while their package config runs (CMake sets
+# CMAKE_FIND_PACKAGE_NAME during that include), and they are terminal consumers - games or plugins nobody find_package()s
+# - so they only ship their runtime binaries, never their own package/export files. Detecting that here keeps the export
+# machinery out of downstream install trees without any per-project switch.
+if (CMAKE_FIND_PACKAGE_NAME)
+    set(export_sub_project_package OFF)
+else ()
+    set(export_sub_project_package ON)
+endif ()
+
 function(exp_gather_target_runtime_dependencies_recurse)
     set(options "")
     set(singleValueArgs NAME OUT_RUNTIME_DEP OUT_DEP_TARGET)
@@ -376,16 +387,23 @@ function(exp_add_executable)
     endif()
 
     if (NOT arg_NOT_INSTALL)
+        if (export_sub_project_package)
+            set(export_args EXPORT ${SUB_PROJECT_NAME}Targets)
+        else ()
+            set(export_args "")
+        endif ()
         install(
             TARGETS ${arg_NAME}
-            EXPORT ${SUB_PROJECT_NAME}Targets
+            ${export_args}
             RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Binaries
         )
-        export(
-            TARGETS ${arg_NAME}
-            NAMESPACE ${SUB_PROJECT_NAME}::
-            APPEND FILE ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Targets.cmake
-        )
+        if (export_sub_project_package)
+            export(
+                TARGETS ${arg_NAME}
+                NAMESPACE ${SUB_PROJECT_NAME}::
+                APPEND FILE ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Targets.cmake
+            )
+        endif ()
 
         if (APPLE)
             install(CODE "execute_process(COMMAND install_name_tool -add_rpath @executable_path ${CMAKE_INSTALL_PREFIX}/${SUB_PROJECT_NAME}/Binaries/$<TARGET_FILE_NAME:${arg_NAME}>)")
@@ -495,18 +513,25 @@ function(exp_add_library)
             DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Include
         )
 
+        if (export_sub_project_package)
+            set(export_args EXPORT ${SUB_PROJECT_NAME}Targets)
+        else ()
+            set(export_args "")
+        endif ()
         install(
             TARGETS ${arg_NAME}
-            EXPORT ${SUB_PROJECT_NAME}Targets
+            ${export_args}
             ARCHIVE DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
             LIBRARY DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Lib
             RUNTIME DESTINATION ${SUB_PROJECT_NAME}/Target/${arg_NAME}/Binaries
         )
-        export(
-            TARGETS ${arg_NAME}
-            NAMESPACE ${SUB_PROJECT_NAME}::
-            APPEND FILE ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Targets.cmake
-        )
+        if (export_sub_project_package)
+            export(
+                TARGETS ${arg_NAME}
+                NAMESPACE ${SUB_PROJECT_NAME}::
+                APPEND FILE ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Targets.cmake
+            )
+        endif ()
 
         if ("${arg_TYPE}" STREQUAL "SHARED")
             install(
@@ -570,61 +595,63 @@ function(exp_add_benchmark)
     )
 endfunction()
 
-install(
-    EXPORT ${SUB_PROJECT_NAME}Targets
-    FILE ${SUB_PROJECT_NAME}Targets.cmake
-    NAMESPACE ${SUB_PROJECT_NAME}::
-    DESTINATION ${SUB_PROJECT_NAME}
-)
-
-configure_package_config_file(
-    ${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in
-    ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Config.cmake
-    INSTALL_DESTINATION ${SUB_PROJECT_NAME}/CMake
-)
-
-write_basic_package_version_file(
-    ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}ConfigVersion.cmake
-    VERSION ${SUB_PROJECT_VERSION_MAJOR}.${SUB_PROJECT_VERSION_MINOR}.${SUB_PROJECT_VERSION_PATCH}
-    COMPATIBILITY SameMajorVersion
-)
-
-install(
-    FILES
-        ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Config.cmake
-        ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}ConfigVersion.cmake
-    DESTINATION ${SUB_PROJECT_NAME}
-)
-
-file(GLOB_RECURSE preset_cmake_libs ${CMAKE_CURRENT_LIST_DIR}/*)
-foreach (cmake_lib ${preset_cmake_libs})
-    file(
-        COPY ${cmake_lib}
-        DESTINATION ${CMAKE_BINARY_DIR}/CMake
+if (export_sub_project_package)
+    install(
+        EXPORT ${SUB_PROJECT_NAME}Targets
+        FILE ${SUB_PROJECT_NAME}Targets.cmake
+        NAMESPACE ${SUB_PROJECT_NAME}::
+        DESTINATION ${SUB_PROJECT_NAME}
     )
-endforeach ()
-install(
-    FILES ${preset_cmake_libs}
-    DESTINATION ${SUB_PROJECT_NAME}/CMake
-)
 
-if (DEFINED SUB_PROJECT_CMAKE_LIBS)
-    foreach (cmake_lib ${SUB_PROJECT_CMAKE_LIBS})
-        if (IS_ABSOLUTE ${cmake_lib})
-            message(FATAL_ERROR "project cmake libs defined in SUB_PROJECT_CMAKE_LIBS should be relative path from project root")
-        endif ()
+    configure_package_config_file(
+        ${CMAKE_CURRENT_LIST_DIR}/Config.cmake.in
+        ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Config.cmake
+        INSTALL_DESTINATION ${SUB_PROJECT_NAME}/CMake
+    )
 
-        set(src_file ${CMAKE_SOURCE_DIR}/${cmake_lib})
-        get_filename_component(binary_tree_dst_dir ${CMAKE_BINARY_DIR}/CMake/${cmake_lib} DIRECTORY)
-        get_filename_component(install_tree_dst_dir ${SUB_PROJECT_NAME}/CMake/${cmake_lib} DIRECTORY)
+    write_basic_package_version_file(
+        ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}ConfigVersion.cmake
+        VERSION ${SUB_PROJECT_VERSION_MAJOR}.${SUB_PROJECT_VERSION_MINOR}.${SUB_PROJECT_VERSION_PATCH}
+        COMPATIBILITY SameMajorVersion
+    )
 
+    install(
+        FILES
+            ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}Config.cmake
+            ${CMAKE_BINARY_DIR}/${SUB_PROJECT_NAME}ConfigVersion.cmake
+        DESTINATION ${SUB_PROJECT_NAME}
+    )
+
+    file(GLOB_RECURSE preset_cmake_libs ${CMAKE_CURRENT_LIST_DIR}/*)
+    foreach (cmake_lib ${preset_cmake_libs})
         file(
-            COPY ${src_file}
-            DESTINATION ${binary_tree_dst_dir}
-        )
-        install(
-            FILES ${src_file}
-            DESTINATION ${install_tree_dst_dir}
+            COPY ${cmake_lib}
+            DESTINATION ${CMAKE_BINARY_DIR}/CMake
         )
     endforeach ()
+    install(
+        FILES ${preset_cmake_libs}
+        DESTINATION ${SUB_PROJECT_NAME}/CMake
+    )
+
+    if (DEFINED SUB_PROJECT_CMAKE_LIBS)
+        foreach (cmake_lib ${SUB_PROJECT_CMAKE_LIBS})
+            if (IS_ABSOLUTE ${cmake_lib})
+                message(FATAL_ERROR "project cmake libs defined in SUB_PROJECT_CMAKE_LIBS should be relative path from project root")
+            endif ()
+
+            set(src_file ${CMAKE_SOURCE_DIR}/${cmake_lib})
+            get_filename_component(binary_tree_dst_dir ${CMAKE_BINARY_DIR}/CMake/${cmake_lib} DIRECTORY)
+            get_filename_component(install_tree_dst_dir ${SUB_PROJECT_NAME}/CMake/${cmake_lib} DIRECTORY)
+
+            file(
+                COPY ${src_file}
+                DESTINATION ${binary_tree_dst_dir}
+            )
+            install(
+                FILES ${src_file}
+                DESTINATION ${install_tree_dst_dir}
+            )
+        endforeach ()
+    endif ()
 endif ()
