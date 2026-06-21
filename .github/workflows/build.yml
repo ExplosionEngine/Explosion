@@ -103,4 +103,13 @@ jobs:
       - name: Install
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target install -j ${{env.MAKE_THREAD_NUM}}
 
-      # TODO build test project
+      # Build the standalone TestProject against the freshly installed engine to verify the packaged engine (its
+      # ExplosionConfig.cmake and full_deploy'd third-party dependencies) is consumable by a downstream project.
+      - name: Configure Test Project
+        run: cmake -B ${{github.workspace}}/TestProject/build -S ${{github.workspace}}/TestProject -G=Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENGINE_ROOT=${{github.workspace}}/Installed/Explosion
+
+      - name: Build Test Project
+        run: cmake --build ${{github.workspace}}/TestProject/build --config ${{env.BUILD_TYPE}} -j ${{env.MAKE_THREAD_NUM}}
+
+      - name: Install Test Project
+        run: cmake --build ${{github.workspace}}/TestProject/build --config ${{env.BUILD_TYPE}} --target install -j ${{env.MAKE_THREAD_NUM}}
