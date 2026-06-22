@@ -1,52 +1,75 @@
 //
-// Created by Kindem on 2025/3/16.
+// Created by johnk on 2026/6/21.
 //
 
+#include <cmath>
+
 #include <QResizeEvent>
+#include <QHBoxLayout>
 
 #include <Common/Time.h>
-#include <Editor/Widget/GraphicsSampleWidget.h>
-#include <Editor/Widget/moc_GraphicsSampleWidget.cpp> // NOLINT
+#include <Common/FileSystem.h>
+#include <Editor/Widget/Prototype.h>
+#include <Editor/Widget/moc_Prototype.cpp> // NOLINT
 
-namespace Editor {
-    struct GraphicsWindowSampleVertex {
+// In a unity build <windows.h> may be pulled in by an earlier translation unit after RHI's own headers were already
+// included (and thus their `#undef CreateSemaphore` skipped via #pragma once), leaving the Win32 `CreateSemaphore`
+// macro active. Drop it so the RHI::Device::CreateSemaphore() calls below resolve to the real method.
+#undef CreateSemaphore
+
+namespace Editor::Internal {
+    constexpr float pi = 3.14159265358979323846f;
+    constexpr float twoPi = 2.0f * pi;
+    constexpr float degToRad = pi / 180.0f;
+    constexpr float radToDeg = 180.0f / pi;
+    constexpr float defaultRotationSpeedDegrees = 90.0f;
+
+    struct PrototypeVertex {
         Common::FVec3 position;
     };
 
-    struct GraphicsWindowSampleVsUniform {
-        Common::FVec3 color;
+    struct PrototypeVsUniform {
+        float rotation;
+        float padding0;
+        float padding1;
+        float padding2;
     };
+}
 
-    GraphicsSampleWidget::GraphicsSampleWidget(QWidget* inParent)
+namespace Editor {
+    PrototypeTriangleWidget::PrototypeTriangleWidget(QWidget* inParent)
         : GraphicsWidget(inParent)
+        , rotationSpeed(Internal::defaultRotationSpeedDegrees * Internal::degToRad)
+        , rotation(0.0f)
+        , lastFrameSeconds(-1.0)
         , imageReadySemaphore(GetDevice().CreateSemaphore())
         , renderFinishedSemaphore(GetDevice().CreateSemaphore())
         , frameFence(GetDevice().CreateFence(true))
-        , drawThread(Common::MakeUnique<Common::WorkerThread>("DrawThread"))
+        , drawThread(Common::MakeUnique<Common::WorkerThread>("PrototypeDrawThread"))
     {
-        resize(1024, 768);
+        setMinimumSize(320, 240);
+        resize(640, 480);
         RecreateSwapChain(width(), height());
 
         Render::ShaderCompileOptions shaderCompileOptions;
-        shaderCompileOptions.includeDirectories = {"../Shader/Engine"};
         shaderCompileOptions.byteCodeType = GetDevice().GetGpu().GetInstance().GetRHIType() == RHI::RHIType::directX12 ? Render::ShaderByteCodeType::dxil : Render::ShaderByteCodeType::spirv;
         shaderCompileOptions.withDebugInfo = static_cast<bool>(BUILD_CONFIG_DEBUG); // NOLINT
 
         {
             Render::ShaderCompileInput shaderCompileInput;
-            shaderCompileInput.source = Common::FileUtils::ReadTextFile("../Shader/Editor/GraphicsWindowSample.esl").Unwrap();
+            shaderCompileInput.source = Common::FileUtils::ReadTextFile("../Shader/Editor/Prototype.esl").Unwrap();
             shaderCompileInput.stage = RHI::ShaderStageBits::sVertex;
             shaderCompileInput.entryPoint = "VSMain";
-            shaderCompileInput.includeDirectories.emplace_back("../Test/Sample/ShaderInclude");
+            shaderCompileInput.includeDirectories.emplace_back("../Shader/Explosion");
             vsCompileOutput = Render::ShaderCompiler::Get().Compile(shaderCompileInput, shaderCompileOptions).get();
         }
 
         {
             Render::ShaderCompileInput shaderCompileInput;
-            shaderCompileInput.source = Common::FileUtils::ReadTextFile("../Shader/Editor/GraphicsWindowSample.esl").Unwrap();
+            shaderCompileInput.source = Common::FileUtils::ReadTextFile("../Shader/Editor/Prototype.esl").Unwrap();
             shaderCompileInput.stage = RHI::ShaderStageBits::sPixel;
             shaderCompileInput.entryPoint = "PSMain";
-            shaderCompileInput.includeDirectories.emplace_back("../Test/Sample/ShaderInclude");
+            shaderCompileInput.includeDirectories.emplace_back("../Shader/Explosion");
             psCompileOutput = Render::ShaderCompiler::Get().Compile(shaderCompileInput, shaderCompileOptions).get();
         }
 
@@ -68,7 +91,7 @@ namespace Editor {
                 .SetVertexState(
                     RHI::VertexState()
                         .AddVertexBufferLayout(
-                            RHI::VertexBufferLayout(RHI::VertexStepMode::perVertex, sizeof(GraphicsWindowSampleVertex))
+                            RHI::VertexBufferLayout(RHI::VertexStepMode::perVertex, sizeof(Internal::PrototypeVertex))
                                 .AddAttribute(RHI::VertexAttribute(vsCompileOutput.reflectionData.QueryVertexBindingChecked("POSITION"), RHI::VertexFormat::float32X3, 0))))
                 .SetFragmentState(
                     RHI::FragmentState()
@@ -76,12 +99,12 @@ namespace Editor {
                 .SetPrimitiveState(RHI::PrimitiveState(RHI::PrimitiveTopologyType::triangle, RHI::FillMode::solid, RHI::IndexFormat::uint16, RHI::FrontFace::ccw, RHI::CullMode::none)));
 
         {
-            const std::vector<GraphicsWindowSampleVertex> vertices = {
+            const std::vector<Internal::PrototypeVertex> vertices = {
                 {{-.5f, -.5f, 0.f}},
                 {{.5f, -.5f, 0.f}},
                 {{0.f, .5f, 0.f}},
             };
-            const auto bufferSize = vertices.size() * sizeof(GraphicsWindowSampleVertex);
+            const auto bufferSize = vertices.size() * sizeof(Internal::PrototypeVertex);
 
             vertexBuffer = GetDevice().CreateBuffer(
                 RHI::BufferCreateInfo()
@@ -99,13 +122,13 @@ namespace Editor {
                     .SetType(RHI::BufferViewType::vertex)
                     .SetSize(bufferSize)
                     .SetOffset(0)
-                    .SetExtendVertex(sizeof(GraphicsWindowSampleVertex)));
+                    .SetExtendVertex(sizeof(Internal::PrototypeVertex)));
         }
 
         {
             uniformBuffer = GetDevice().CreateBuffer(
                 RHI::BufferCreateInfo()
-                    .SetSize(sizeof(GraphicsWindowSampleVsUniform))
+                    .SetSize(sizeof(Internal::PrototypeVsUniform))
                     .SetUsages(RHI::BufferUsageBits::uniform | RHI::BufferUsageBits::mapWrite | RHI::BufferUsageBits::copySrc)
                     .SetInitialState(RHI::BufferState::staging)
                     .SetDebugName("vsUniform"));
@@ -113,7 +136,7 @@ namespace Editor {
             uniformBufferView = uniformBuffer->CreateBufferView(
                 RHI::BufferViewCreateInfo()
                     .SetType(RHI::BufferViewType::uniformBinding)
-                    .SetSize(sizeof(GraphicsWindowSampleVsUniform))
+                    .SetSize(sizeof(Internal::PrototypeVsUniform))
                     .SetOffset(0));
         }
 
@@ -127,14 +150,24 @@ namespace Editor {
         DispatchFrame();
     }
 
-    GraphicsSampleWidget::~GraphicsSampleWidget()
+    PrototypeTriangleWidget::~PrototypeTriangleWidget()
     {
         running = false;
         drawThread.Reset();
         WaitDeviceIdle();
     }
 
-    void GraphicsSampleWidget::resizeEvent(QResizeEvent* event)
+    void PrototypeTriangleWidget::SetRotationSpeed(float inRadiansPerSecond)
+    {
+        rotationSpeed.store(inRadiansPerSecond);
+    }
+
+    float PrototypeTriangleWidget::GetRotationSpeed() const
+    {
+        return rotationSpeed.load();
+    }
+
+    void PrototypeTriangleWidget::resizeEvent(QResizeEvent* event)
     {
         GraphicsWidget::resizeEvent(event);
 
@@ -143,7 +176,7 @@ namespace Editor {
         });
     }
 
-    void GraphicsSampleWidget::RecreateSwapChain(uint32_t inWidth, uint32_t inHeight)
+    void PrototypeTriangleWidget::RecreateSwapChain(uint32_t inWidth, uint32_t inHeight)
     {
         static std::vector<RHI::PixelFormat> formatQualifiers = {
             RHI::PixelFormat::rgba8Unorm,
@@ -186,7 +219,7 @@ namespace Editor {
         }
     }
 
-    void GraphicsSampleWidget::DispatchFrame() const
+    void PrototypeTriangleWidget::DispatchFrame()
     {
         if (!running) {
             return;
@@ -194,19 +227,21 @@ namespace Editor {
         drawThread->EmplaceTask([this]() -> void { DrawFrame(); });
     }
 
-    void GraphicsSampleWidget::DrawFrame() const
+    void PrototypeTriangleWidget::DrawFrame()
     {
         frameFence->Wait();
         frameFence->Reset();
 
         const double currentTimeSeconds = Common::TimePoint::Now().ToSeconds();
-        const GraphicsWindowSampleVsUniform uniform = {{
-            (std::sin(currentTimeSeconds) + 1) / 2,
-            (std::cos(currentTimeSeconds) + 1) / 2,
-            std::abs(std::sin(currentTimeSeconds))
-        }};
-        auto* uniformData = uniformBuffer->Map(RHI::MapMode::write, 0, sizeof(GraphicsWindowSampleVsUniform));
-        memcpy(uniformData, &uniform, sizeof(GraphicsWindowSampleVsUniform));
+        if (lastFrameSeconds >= 0.0) {
+            rotation += static_cast<float>(currentTimeSeconds - lastFrameSeconds) * rotationSpeed.load();
+            rotation = std::fmod(rotation, Internal::twoPi);
+        }
+        lastFrameSeconds = currentTimeSeconds;
+
+        const Internal::PrototypeVsUniform uniform { rotation, 0.0f, 0.0f, 0.0f };
+        auto* uniformData = uniformBuffer->Map(RHI::MapMode::write, 0, sizeof(Internal::PrototypeVsUniform));
+        memcpy(uniformData, &uniform, sizeof(Internal::PrototypeVsUniform));
         uniformBuffer->UnMap();
 
         const auto backTextureIndex = swapChain->AcquireBackTexture(imageReadySemaphore.Get());
@@ -240,4 +275,50 @@ namespace Editor {
 
         DispatchFrame();
     }
+
+    PrototypeBackend::PrototypeBackend(PrototypeTriangleWidget* inTriangle, QObject* inParent)
+        : QObject(inParent)
+        , triangle(inTriangle)
+    {
+    }
+
+    PrototypeBackend::~PrototypeBackend() = default;
+
+    void PrototypeBackend::SetRotationSpeed(double inDegreesPerSecond)
+    {
+        triangle->SetRotationSpeed(static_cast<float>(inDegreesPerSecond) * Internal::degToRad);
+    }
+
+    double PrototypeBackend::GetRotationSpeed() const
+    {
+        return static_cast<double>(triangle->GetRotationSpeed() * Internal::radToDeg);
+    }
+
+    PrototypeWebWidget::PrototypeWebWidget(PrototypeTriangleWidget* inTriangle, QWidget* inParent)
+        : WebWidget(inParent)
+    {
+        backend = new PrototypeBackend(inTriangle, this);
+        GetWebChannel()->registerObject("backend", backend);
+        Load("/prototype");
+    }
+
+    PrototypeWebWidget::~PrototypeWebWidget() = default;
+
+    PrototypePlayground::PrototypePlayground(QWidget* inParent)
+        : QWidget(inParent)
+    {
+        setWindowTitle("Explosion Prototype Playground");
+        resize(1280, 720);
+
+        triangle = new PrototypeTriangleWidget(this);
+        web = new PrototypeWebWidget(triangle, this);
+
+        auto* layout = new QHBoxLayout(this);
+        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setSpacing(0);
+        layout->addWidget(triangle, 1);
+        layout->addWidget(web, 1);
+    }
+
+    PrototypePlayground::~PrototypePlayground() = default;
 } // namespace Editor

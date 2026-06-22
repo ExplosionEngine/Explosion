@@ -9,15 +9,12 @@
 #include <Runtime/Engine.h>
 #include <Editor/Widget/Editor.h>
 #include <Editor/Widget/ProjectHub.h>
+#include <Editor/Widget/Prototype.h>
 #include <Editor/WebUIServer.h>
 
-#if BUILD_CONFIG_DEBUG
-#include <Editor/Widget/GraphicsSampleWidget.h>
-
-static Core::CmdlineArgValue<bool> caGraphicsSample(
-    "graphicsSample", "-graphicsSample", false,
-    "Whether to run graphics sample instead of editor");
-#endif
+static Core::CmdlineArgValue<bool> caPrototype(
+    "prototype", "-prototype", false,
+    "Whether to run the prototype playground (native graphics widget mixed with web widget) instead of editor");
 
 static Core::CmdlineArgValue<std::string> caRhiType(
     "rhiType", "-rhi", RHI::GetPlatformDefaultRHIAbbrString(),
@@ -28,9 +25,7 @@ static Core::CmdlineArgValue<std::string> caProjectRoot(
     "project root path");
 
 enum class EditorApplicationModel : uint8_t {
-#if BUILD_CONFIG_DEBUG
-    graphicsSample,
-#endif
+    prototype,
     projectHub,
     editor,
     max
@@ -38,11 +33,9 @@ enum class EditorApplicationModel : uint8_t {
 
 static EditorApplicationModel GetAppModel()
 {
-#if BUILD_CONFIG_DEBUG
-    if (caGraphicsSample.GetValue()) {
-        return EditorApplicationModel::graphicsSample;
+    if (caPrototype.GetValue()) {
+        return EditorApplicationModel::prototype;
     }
-#endif
     if (caProjectRoot.GetValue().empty()) {
         return EditorApplicationModel::projectHub;
     }
@@ -51,11 +44,8 @@ static EditorApplicationModel GetAppModel()
 
 static bool NeedInitCore(EditorApplicationModel inModel)
 {
-    bool result = inModel == EditorApplicationModel::editor;
-#if BUILD_CONFIG_DEBUG
-    result = result || inModel == EditorApplicationModel::graphicsSample;
-#endif
-    return result;
+    return inModel == EditorApplicationModel::editor
+        || inModel == EditorApplicationModel::prototype;
 }
 
 static void InitializePreQtApp(EditorApplicationModel inModel)
@@ -91,11 +81,9 @@ static void Cleanup(EditorApplicationModel inModel)
 
 static Common::UniquePtr<QWidget> CreateMainWidget(EditorApplicationModel inModel)
 {
-#if BUILD_CONFIG_DEBUG
-    if (inModel == EditorApplicationModel::graphicsSample) {
-        return new Editor::GraphicsSampleWidget();
+    if (inModel == EditorApplicationModel::prototype) {
+        return new Editor::PrototypePlayground();
     }
-#endif
     if (inModel == EditorApplicationModel::projectHub) { // NOLINT
         return new Editor::ProjectHub();
     }
