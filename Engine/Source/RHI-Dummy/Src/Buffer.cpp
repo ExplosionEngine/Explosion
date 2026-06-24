@@ -19,7 +19,7 @@ namespace RHI::Dummy {
         return dummyData.data();
     }
 
-    void DummyBuffer::UnMap()
+    void DummyBuffer::Unmap()
     {
     }
 

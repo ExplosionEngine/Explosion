@@ -35,7 +35,7 @@ namespace RHI::Vulkan {
         return data;
     }
 
-    void VulkanBuffer::UnMap()
+    void VulkanBuffer::Unmap()
     {
         vmaUnmapMemory(device.GetNativeAllocator(), nativeAllocation);
     }

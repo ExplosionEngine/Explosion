@@ -282,7 +282,7 @@ namespace Runtime {
                     dstSubResourceOffset += dstCopyFootprint.totalBytes;
                 }
             }
-            stagingBuffer->UnMap();
+            stagingBuffer->Unmap();
 
             const Common::UniquePtr<RHI::CommandBuffer> cmdBuffer = device->CreateCommandBuffer();
             const auto recoder = cmdBuffer->Begin();

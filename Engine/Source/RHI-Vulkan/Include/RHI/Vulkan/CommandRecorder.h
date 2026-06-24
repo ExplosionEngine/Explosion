@@ -38,7 +38,7 @@ namespace RHI::Vulkan {
         explicit VulkanCopyPassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer);
         ~VulkanCopyPassCommandRecorder() override;
 
-        // CommandCommandRecorder
+        // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
 
         // CopyPassCommandRecorder
@@ -60,7 +60,7 @@ namespace RHI::Vulkan {
         explicit VulkanComputePassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer);
         ~VulkanComputePassCommandRecorder() override;
 
-        // CommandCommandRecorder
+        // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
 
         // ComputePassCommandRecorder
@@ -82,7 +82,7 @@ namespace RHI::Vulkan {
         explicit VulkanRasterPassCommandRecorder(VulkanDevice& inDevice, VulkanCommandRecorder& inCmdRecorder, VulkanCommandBuffer& inCmdBuffer, const RasterPassBeginInfo& inBeginInfo);
         ~VulkanRasterPassCommandRecorder() override;
 
-        // CommandCommandRecorder
+        // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
 
         // RasterPassCommandRecorder

@@ -172,7 +172,7 @@ protected:
             if (uniformBuffers.sceneParams) {
                 auto* uboData = uniformBuffers.sceneParams->Map(MapMode::write, 0, sizeof(UBOSceneParams));
                 memcpy(uboData, &uboSceneParams, sizeof(UBOSceneParams));
-                uniformBuffers.sceneParams->UnMap();
+                uniformBuffers.sceneParams->Unmap();
             }
 
             RGBuilder builder(*device);
@@ -606,7 +606,7 @@ private:
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::write, 0, vBufferInfo.size);
             memcpy(data, model->rawVertBuffer.data(), vBufferInfo.size);
-            vertexBuffer->UnMap();
+            vertexBuffer->Unmap();
         }
 
         // Index buffer
@@ -620,7 +620,7 @@ private:
         if (indexBuffer != nullptr) {
             auto* data = indexBuffer->Map(MapMode::write, 0, iBufferInfo.size);
             memcpy(data, model->rawIndBuffer.data(), iBufferInfo.size);
-            indexBuffer->UnMap();
+            indexBuffer->Unmap();
         }
     }
 
@@ -644,7 +644,7 @@ private:
         if (quadVertexBuffer != nullptr) {
             auto* data = quadVertexBuffer->Map(MapMode::write, 0, vBufferInfo.size);
             memcpy(data, vertices.data(), vBufferInfo.size);
-            quadVertexBuffer->UnMap();
+            quadVertexBuffer->Unmap();
         }
 
         // Quad index buffer
@@ -659,7 +659,7 @@ private:
         if (quadIndexBuffer != nullptr) {
             auto* data = quadIndexBuffer->Map(MapMode::write, 0, iBufferInfo.size);
             memcpy(data, indices.data(), iBufferInfo.size);
-            quadIndexBuffer->UnMap();
+            quadIndexBuffer->Unmap();
         }
     }
 
@@ -787,7 +787,7 @@ private:
         if (uniformBuffers.sceneParams != nullptr) {
             auto* data = uniformBuffers.sceneParams->Map(MapMode::write, 0, sizeof(UBOSceneParams));
             memcpy(data, &uboSceneParams, sizeof(UBOSceneParams));
-            uniformBuffers.sceneParams->UnMap();
+            uniformBuffers.sceneParams->Unmap();
         }
 
         // SSAO parameters
@@ -803,7 +803,7 @@ private:
         if (uniformBuffers.ssaoParams != nullptr) {
             auto* data = uniformBuffers.ssaoParams->Map(MapMode::write, 0, sizeof(UBOSSAOParams));
             memcpy(data, &ubossaoParams, sizeof(UBOSSAOParams));
-            uniformBuffers.ssaoParams->UnMap();
+            uniformBuffers.ssaoParams->Unmap();
         }
 
         // SSAO kernel
@@ -835,7 +835,7 @@ private:
         if (uniformBuffers.ssaoKernel != nullptr) {
             auto* data = uniformBuffers.ssaoKernel->Map(MapMode::write, 0, kernelInfo.size);
             memcpy(data, ssaoKernel.data(), kernelInfo.size);
-            uniformBuffers.ssaoKernel->UnMap();
+            uniformBuffers.ssaoKernel->Unmap();
         }
     }
 
@@ -859,7 +859,7 @@ private:
         if (stagingBuffer != nullptr) {
             auto* data = stagingBuffer->Map(MapMode::write, 0, bufferInfo.size);
             memcpy(data, ssaoNoise.data(), bufferInfo.size);
-            stagingBuffer->UnMap();
+            stagingBuffer->Unmap();
         }
 
         noiseTex = device->CreateTexture(
@@ -936,7 +936,7 @@ private:
                         auto* dst = static_cast<uint8_t*>(data) + i * copyFootprint.rowPitch;
                         memcpy(dst, src, srcRowPitch);
                     }
-                    stagingBuffer->UnMap();
+                    stagingBuffer->Unmap();
                 }
 
                 auto copyCmdBuffer = device->CreateCommandBuffer();

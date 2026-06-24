@@ -197,8 +197,8 @@ namespace RHI::DirectX12 {
 
     ECIMPL_BEGIN(BlendOp, D3D12_BLEND_OP)
         ECIMPL_ITEM(BlendOp::opAdd, D3D12_BLEND_OP_ADD)
-        ECIMPL_ITEM(BlendOp::opSubstract, D3D12_BLEND_OP_SUBTRACT)
-        ECIMPL_ITEM(BlendOp::opReverseSubstract, D3D12_BLEND_OP_REV_SUBTRACT)
+        ECIMPL_ITEM(BlendOp::opSubtract, D3D12_BLEND_OP_SUBTRACT)
+        ECIMPL_ITEM(BlendOp::opReverseSubtract, D3D12_BLEND_OP_REV_SUBTRACT)
         ECIMPL_ITEM(BlendOp::opMin, D3D12_BLEND_OP_MIN)
         ECIMPL_ITEM(BlendOp::opMax, D3D12_BLEND_OP_MAX)
     ECIMPL_END(D3D12_BLEND_OP)

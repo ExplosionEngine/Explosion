@@ -152,7 +152,7 @@ private:
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, vertices.data(), bufferCreateInfo.size);
-            vertexBuffer->UnMap();
+            vertexBuffer->Unmap();
         }
 
         const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()

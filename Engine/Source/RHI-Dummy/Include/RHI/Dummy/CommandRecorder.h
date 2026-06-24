@@ -31,7 +31,7 @@ namespace RHI::Dummy {
         explicit DummyCopyPassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);
         ~DummyCopyPassCommandRecorder() override;
 
-        // CommandCommandRecorder
+        // CommonCommandRecorder
         void ResourceBarrier(const RHI::Barrier& barrier) override;
 
         // CopyPassCommandRecorder
@@ -48,7 +48,7 @@ namespace RHI::Dummy {
         explicit DummyComputePassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);
         ~DummyComputePassCommandRecorder() override;
 
-        // CommandCommandRecorder
+        // CommonCommandRecorder
         void ResourceBarrier(const RHI::Barrier& barrier) override;
 
         // ComputePassCommandRecorder
@@ -64,7 +64,7 @@ namespace RHI::Dummy {
         explicit DummyRasterPassCommandRecorder(const DummyCommandBuffer& dummyCommandBuffer);
         ~DummyRasterPassCommandRecorder() override;
 
-        // CommandCommandRecorder
+        // CommonCommandRecorder
         void ResourceBarrier(const RHI::Barrier& barrier) override;
 
         // RasterPassCommandRecorder

@@ -162,7 +162,7 @@ private:
         if (vertexBuffer != nullptr) {
             auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, vertices.data(), bufferCreateInfo.size);
-            vertexBuffer->UnMap();
+            vertexBuffer->Unmap();
         }
 
         const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
@@ -187,7 +187,7 @@ private:
         if (indexBuffer != nullptr) {
             auto* data = indexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, indices.data(), bufferCreateInfo.size);
-            indexBuffer->UnMap();
+            indexBuffer->Unmap();
         }
 
         const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
@@ -241,7 +241,7 @@ private:
                 auto* dst = static_cast<uint8_t*>(data) + i * copyFootprint.rowPitch;
                 memcpy(dst, src, srcRowPitch);
             }
-            pixelBuffer->UnMap();
+            pixelBuffer->Unmap();
         }
         stbi_image_free(pixels);
 
@@ -278,7 +278,7 @@ private:
         if (uniformBuffer != nullptr) {
             auto* mapData = uniformBuffer->Map(MapMode::write, 0, sizeof(FMat4x4));
             memcpy(mapData, &modelMatrix, sizeof(FMat4x4));
-            uniformBuffer->UnMap();
+            uniformBuffer->Unmap();
         }
     }
 

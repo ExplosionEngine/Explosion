@@ -115,7 +115,7 @@ namespace Editor {
 
             auto* data = vertexBuffer->Map(RHI::MapMode::write, 0, bufferSize);
             memcpy(data, vertices.data(), bufferSize);
-            vertexBuffer->UnMap();
+            vertexBuffer->Unmap();
 
             vertexBufferView = vertexBuffer->CreateBufferView(
                 RHI::BufferViewCreateInfo()
@@ -242,7 +242,7 @@ namespace Editor {
         const Internal::PrototypeVsUniform uniform { rotation, 0.0f, 0.0f, 0.0f };
         auto* uniformData = uniformBuffer->Map(RHI::MapMode::write, 0, sizeof(Internal::PrototypeVsUniform));
         memcpy(uniformData, &uniform, sizeof(Internal::PrototypeVsUniform));
-        uniformBuffer->UnMap();
+        uniformBuffer->Unmap();
 
         const auto backTextureIndex = swapChain->AcquireBackTexture(imageReadySemaphore.Get());
         const Common::UniquePtr<RHI::CommandRecorder> commandRecorder = commandBuffer->Begin();

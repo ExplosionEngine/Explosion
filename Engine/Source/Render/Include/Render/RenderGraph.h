@@ -399,11 +399,11 @@ namespace Render {
         void DevirtualizeAttachmentViews(const RGRasterPassDesc& inDesc);
         void FinalizePassResources(const std::unordered_set<RGResourceRef>& inResources);
         void FinalizePassBindGroups(const std::vector<RGBindGroupRef>& inBindGroups);
-        void TransitionResourcesForCopyPassDesc(RHI::CommandCommandRecorder& inRecoder, const RGCopyPassDesc& inDesc);
-        void TransitionResourcesForRasterPassDesc(RHI::CommandCommandRecorder& inRecoder, const RGRasterPassDesc& inDesc);
-        void TransitionResourcesForBindGroups(RHI::CommandCommandRecorder& inRecoder, const std::vector<RGBindGroupRef>& inBindGroups);
-        void TransitionBuffer(RHI::CommandCommandRecorder& inRecoder, RGBufferRef inBuffer, RHI::BufferState inState);
-        void TransitionTexture(RHI::CommandCommandRecorder& inRecoder, RGTextureRef inTexture, RHI::TextureState inState);
+        void TransitionResourcesForCopyPassDesc(RHI::CommonCommandRecorder& inRecoder, const RGCopyPassDesc& inDesc);
+        void TransitionResourcesForRasterPassDesc(RHI::CommonCommandRecorder& inRecoder, const RGRasterPassDesc& inDesc);
+        void TransitionResourcesForBindGroups(RHI::CommonCommandRecorder& inRecoder, const std::vector<RGBindGroupRef>& inBindGroups);
+        void TransitionBuffer(RHI::CommonCommandRecorder& inRecoder, RGBufferRef inBuffer, RHI::BufferState inState);
+        void TransitionTexture(RHI::CommonCommandRecorder& inRecoder, RGTextureRef inTexture, RHI::TextureState inState);
 
         bool executed;
         RHI::Device& device;

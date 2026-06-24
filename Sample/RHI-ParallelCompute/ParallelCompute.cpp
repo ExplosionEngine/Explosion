@@ -43,7 +43,7 @@ public:
             << ")" << '\n';
         }
 
-        readbackBuffer->UnMap();
+        readbackBuffer->Unmap();
     }
 private:
     void SelectGPU()
@@ -75,7 +75,7 @@ private:
         if (stagingBuf != nullptr) {
             auto* mapPointer = stagingBuf->Map(MapMode::write, 0, bufInfo.size);
             memcpy(mapPointer, data.data(), bufInfo.size);
-            stagingBuf->UnMap();
+            stagingBuf->Unmap();
         }
 
         const auto inputBufInfo = BufferCreateInfo()

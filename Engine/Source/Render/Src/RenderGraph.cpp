@@ -873,7 +873,7 @@ namespace Render {
                 const auto* src = srcDataPtr + uploadInfo.srcOffset; // NOLINT
                 auto* dst = rhiBuffer->Map(RHI::MapMode::write, uploadInfo.dstOffset, srcDataSize);
                 memcpy(dst, src, srcDataSize);
-                rhiBuffer->UnMap();
+                rhiBuffer->Unmap();
             }));
         }
     }
@@ -1003,7 +1003,7 @@ namespace Render {
         }
     }
 
-    void RGBuilder::TransitionResourcesForCopyPassDesc(RHI::CommandCommandRecorder& inRecoder, const RGCopyPassDesc& inDesc)
+    void RGBuilder::TransitionResourcesForCopyPassDesc(RHI::CommonCommandRecorder& inRecoder, const RGCopyPassDesc& inDesc)
     {
         for (auto* copySrc : inDesc.copySrcs) {
             if (copySrc->type == RGResType::buffer) {
@@ -1025,7 +1025,7 @@ namespace Render {
         }
     }
 
-    void RGBuilder::TransitionResourcesForRasterPassDesc(RHI::CommandCommandRecorder& inRecoder, const RGRasterPassDesc& inDesc)
+    void RGBuilder::TransitionResourcesForRasterPassDesc(RHI::CommonCommandRecorder& inRecoder, const RGRasterPassDesc& inDesc)
     {
         if (inDesc.depthStencilAttachment.has_value()) {
             const auto& dsa = inDesc.depthStencilAttachment.value();
@@ -1036,7 +1036,7 @@ namespace Render {
         }
     }
 
-    void RGBuilder::TransitionResourcesForBindGroups(RHI::CommandCommandRecorder& inRecoder, const std::vector<RGBindGroupRef>& inBindGroups)
+    void RGBuilder::TransitionResourcesForBindGroups(RHI::CommonCommandRecorder& inRecoder, const std::vector<RGBindGroupRef>& inBindGroups)
     {
         for (auto* bindGroup : inBindGroups) {
             for (const auto& [type, view] : bindGroup->desc.items | std::views::values) {
@@ -1057,7 +1057,7 @@ namespace Render {
         }
     }
 
-    void RGBuilder::TransitionBuffer(RHI::CommandCommandRecorder& inRecoder, RGBufferRef inBuffer, RHI::BufferState inState)
+    void RGBuilder::TransitionBuffer(RHI::CommonCommandRecorder& inRecoder, RGBufferRef inBuffer, RHI::BufferState inState)
     {
         auto& currentState = std::get<RHI::BufferState>(resourceStates.at(inBuffer));
         if (currentState == inState) {
@@ -1067,7 +1067,7 @@ namespace Render {
         currentState = inState;
     }
 
-    void RGBuilder::TransitionTexture(RHI::CommandCommandRecorder& inRecoder, RGTextureRef inTexture, RHI::TextureState inState)
+    void RGBuilder::TransitionTexture(RHI::CommonCommandRecorder& inRecoder, RGTextureRef inTexture, RHI::TextureState inState)
     {
         auto& currentState = std::get<RHI::TextureState>(resourceStates.at(inTexture));
         if (currentState == inState) {

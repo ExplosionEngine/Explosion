@@ -304,7 +304,7 @@ void BaseTexApp::CreateVertexAndIndexBuffer()
     if (vertexBuffer != nullptr) {
         auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
         memcpy(data, vertices.data(), bufferCreateInfo.size);
-        vertexBuffer->UnMap();
+        vertexBuffer->Unmap();
     }
 
     const std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
@@ -318,7 +318,7 @@ void BaseTexApp::CreateVertexAndIndexBuffer()
     if (indexBuffer != nullptr) {
         auto* data = indexBuffer->Map(MapMode::write, 0, indexInfo.size);
         memcpy(data, indices.data(), bufferCreateInfo.size);
-        indexBuffer->UnMap();
+        indexBuffer->Unmap();
     }
 }
 
@@ -358,7 +358,7 @@ void BaseTexApp::CreateTextureAndSampler()
             auto* dst = static_cast<uint8_t*>(data) + i * copyFootprint.rowPitch;
             memcpy(dst, src, srcRowPitch);
         }
-        imageBuffer->UnMap();
+        imageBuffer->Unmap();
     }
     stbi_image_free(imgData);
 

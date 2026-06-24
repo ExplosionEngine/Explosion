@@ -180,13 +180,13 @@ namespace RHI {
         RasterPassBeginInfo& AddColorAttachment(const ColorAttachment& inColorAttachment);
     };
 
-    class CommandCommandRecorder {
+    class CommonCommandRecorder {
     public:
-        virtual ~CommandCommandRecorder();
+        virtual ~CommonCommandRecorder();
         virtual void ResourceBarrier(const Barrier& barrier) = 0;
     };
 
-    class CopyPassCommandRecorder : public CommandCommandRecorder {
+    class CopyPassCommandRecorder : public CommonCommandRecorder {
     public:
         NonCopyable(CopyPassCommandRecorder)
         ~CopyPassCommandRecorder() override;
@@ -202,7 +202,7 @@ namespace RHI {
         CopyPassCommandRecorder();
     };
 
-    class ComputePassCommandRecorder : public CommandCommandRecorder {
+    class ComputePassCommandRecorder : public CommonCommandRecorder {
     public:
         NonCopyable(ComputePassCommandRecorder)
         ~ComputePassCommandRecorder() override;
@@ -216,7 +216,7 @@ namespace RHI {
         ComputePassCommandRecorder();
     };
 
-    class RasterPassCommandRecorder : public CommandCommandRecorder {
+    class RasterPassCommandRecorder : public CommonCommandRecorder {
     public:
         NonCopyable(RasterPassCommandRecorder)
         ~RasterPassCommandRecorder() override;
@@ -241,7 +241,7 @@ namespace RHI {
         RasterPassCommandRecorder();
     };
 
-    class CommandRecorder : public CommandCommandRecorder {
+    class CommandRecorder : public CommonCommandRecorder {
     public:
         NonCopyable(CommandRecorder)
         ~CommandRecorder() override;

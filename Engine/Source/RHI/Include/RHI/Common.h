@@ -327,8 +327,8 @@ namespace RHI {
 
     enum class BlendOp : uint8_t {
         opAdd,
-        opSubstract,
-        opReverseSubstract,
+        opSubtract,
+        opReverseSubtract,
         opMin,
         opMax,
         max
