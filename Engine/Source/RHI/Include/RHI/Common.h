@@ -6,21 +6,44 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <utility>
 
 #include <Common/Utility.h>
 #include <Common/Memory.h>
 #include <Common/Math/Vector.h>
 #include <Common/Math/Color.h>
 
-#define DECLARE_EC_FUNC() template <typename A, typename B> inline B EnumCast(const A& value);
-#define ECIMPL_BEGIN(A, B) template <> inline B EnumCast<A, B>(const A& value) {
-#define ECIMPL_ITEM(A, B) if (value == A) { return B; }
-#define ECIMPL_END(B) Unimplement(); return (B) 0; };
+// EnumCast/FlagsCast model each backend's enum mapping as a static lookup table instead of an if-chain: a per-(A, B)
+// EnumCastImpl/FlagsCastImpl specialization carries only the data, while the shared EnumCast/FlagsCast walk that data.
+// Casting a pair that has no specialization fails to compile (the primary template has no member table), so a missing
+// mapping is caught at build time rather than reaching Unimplement() at runtime.
+#define DECLARE_EC_FUNC() \
+    template <typename A, typename B> struct EnumCastImpl {}; \
+    template <typename A, typename B> inline B EnumCast(const A& value) \
+    { \
+        for (const auto& pair : EnumCastImpl<A, B>::table) { \
+            if (pair.first == value) { return pair.second; } \
+        } \
+        Unimplement(); \
+        return static_cast<B>(0); \
+    }
+#define ECIMPL_BEGIN(A, B) template <> struct EnumCastImpl<A, B> { static constexpr std::pair<A, B> table[] = {
+#define ECIMPL_ITEM(A, B) { A, B },
+#define ECIMPL_END(B) }; };
 
-#define DECLARE_FC_FUNC() template <typename A, typename B> inline B FlagsCast(const A& flags);
-#define FCIMPL_BEGIN(A, B) template <> inline B FlagsCast<A, B>(const A& flags) { B result = (B) 0;
-#define FCIMPL_ITEM(A, B) if (flags & A) { result |= B; }
-#define FCIMPL_END(B) return result; };
+#define DECLARE_FC_FUNC() \
+    template <typename A, typename B> struct FlagsCastImpl {}; \
+    template <typename A, typename B> inline B FlagsCast(const A& flags) \
+    { \
+        B result = static_cast<B>(0); \
+        for (const auto& pair : FlagsCastImpl<A, B>::table) { \
+            if (flags & pair.first) { result |= pair.second; } \
+        } \
+        return result; \
+    }
+#define FCIMPL_BEGIN(A, B) template <> struct FlagsCastImpl<A, B> { static inline const std::pair<A, B> table[] = {
+#define FCIMPL_ITEM(A, B) { A, B },
+#define FCIMPL_END(B) }; };
 
 #define ALIGN_AS_GPU alignas(16)
 
