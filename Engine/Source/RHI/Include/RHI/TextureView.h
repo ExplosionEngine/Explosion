@@ -5,7 +5,6 @@
 #pragma once
 
 #include <Common/Utility.h>
-#include <Common/Hash.h>
 #include <RHI/Common.h>
 
 namespace RHI {
@@ -32,8 +31,6 @@ namespace RHI {
         TextureViewCreateInfo& SetAspect(TextureAspect inAspect);
         TextureViewCreateInfo& SetMipLevels(uint8_t inBaseMipLevel, uint8_t inMipLevelNum);
         TextureViewCreateInfo& SetArrayLayers(uint8_t inBaseArrayLayer, uint8_t inArrayLayerNum);
-
-        uint64_t Hash() const;
     };
 
     class TextureView {

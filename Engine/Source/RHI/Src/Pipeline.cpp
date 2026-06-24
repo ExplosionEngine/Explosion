@@ -3,7 +3,6 @@
 //
 
 #include <RHI/Pipeline.h>
-#include <Common/Hash.h>
 
 namespace RHI {
     HlslVertexBinding::HlslVertexBinding()
@@ -112,11 +111,6 @@ namespace RHI {
         return *this;
     }
 
-    uint64_t PrimitiveState::Hash() const
-    {
-        return Common::HashUtils::CityHash(this, sizeof(PrimitiveState));
-    }
-
     StencilFaceState::StencilFaceState(
         const CompareFunc inCompareFunc,
         const StencilOp inFailOp,
@@ -221,11 +215,6 @@ namespace RHI {
         return *this;
     }
 
-    uint64_t DepthStencilState::Hash() const
-    {
-        return Common::HashUtils::CityHash(this, sizeof(DepthStencilState));
-    }
-
     MultiSampleState::MultiSampleState(const uint8_t inCount, const uint32_t inMask, const bool inAlphaToCoverage)
         : count(inCount)
         , mask(inMask)
@@ -249,11 +238,6 @@ namespace RHI {
     {
         alphaToCoverage = inAlphaToCoverage;
         return *this;
-    }
-
-    uint64_t MultiSampleState::Hash() const
-    {
-        return Common::HashUtils::CityHash(this, sizeof(MultiSampleState));
     }
 
     BlendComponent::BlendComponent(const BlendOp inOp, const BlendFactor inSrcFactor, const BlendFactor inDstFactor)
@@ -307,11 +291,6 @@ namespace RHI {
         return *this;
     }
 
-    uint64_t ColorTargetState::Hash() const
-    {
-        return Common::HashUtils::CityHash(this, sizeof(ColorTargetState));
-    }
-
     FragmentState::FragmentState()
     {
     }
@@ -320,17 +299,6 @@ namespace RHI {
     {
         colorTargets.emplace_back(inState);
         return *this;
-    }
-
-    uint64_t FragmentState::Hash() const
-    {
-        std::vector<uint64_t> values;
-        values.reserve(colorTargets.size());
-
-        for (const auto& colorTarget : colorTargets) {
-            values.emplace_back(colorTarget.Hash());
-        }
-        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
 
     ComputePipelineCreateInfo::ComputePipelineCreateInfo()

@@ -12,6 +12,23 @@
 namespace Render::Internal {
     constexpr uint64_t resourceViewCacheReleaseFrameLatency = 2;
     constexpr uint64_t bindGroupCacheReleaseFrameLatency = 2;
+
+    template <typename T>
+    static uint64_t HashRhiState(const T& value)
+    {
+        return Common::HashUtils::CityHash(&value, sizeof(T));
+    }
+
+    // FragmentState owns a vector of color targets, so it cannot be hashed as a flat blob like the other states.
+    static uint64_t HashRhiState(const RHI::FragmentState& fragmentState)
+    {
+        std::vector<uint64_t> values;
+        values.reserve(fragmentState.colorTargets.size());
+        for (const auto& colorTarget : fragmentState.colorTargets) {
+            values.emplace_back(HashRhiState(colorTarget));
+        }
+        return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
+    }
 }
 
 namespace Render {
@@ -287,10 +304,10 @@ namespace Render {
         const std::vector<uint64_t> values = {
             shaders.Hash(),
             vertexState.Hash(),
-            primitiveState.Hash(),
-            depthStencilState.Hash(),
-            multiSampleState.Hash(),
-            fragmentState.Hash()
+            Internal::HashRhiState(primitiveState),
+            Internal::HashRhiState(depthStencilState),
+            Internal::HashRhiState(multiSampleState),
+            Internal::HashRhiState(fragmentState)
         };
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
@@ -614,7 +631,7 @@ namespace Render {
     {
         auto& views = bufferViewCaches[buffer].views;
 
-        auto hash = inDesc.Hash();
+        auto hash = Internal::HashRhiState(inDesc);
         if (const auto iter = views.find(hash);
             iter == views.end()) {
             views.emplace(std::make_pair(hash, Common::UniquePtr(buffer->CreateBufferView(inDesc))));
@@ -626,7 +643,7 @@ namespace Render {
     {
         auto& views = textureViewCaches[texture].views;
 
-        auto hash = inDesc.Hash();
+        auto hash = Internal::HashRhiState(inDesc);
         if (const auto iter = views.find(hash);
             iter == views.end()) {
             views.emplace(std::make_pair(hash, Common::UniquePtr(texture->CreateTextureView(inDesc))));
