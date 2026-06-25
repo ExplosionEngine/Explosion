@@ -7,20 +7,23 @@
 namespace RHI {
     size_t GetBytesPerPixel(PixelFormat format)
     {
-        if (format > PixelFormat::begin8Bits && format < PixelFormat::begin16Bits) {
-            return 1;
-        }
-        if (format > PixelFormat::begin16Bits && format < PixelFormat::begin32Bits) {
-            return 2;
-        }
-        if (format > PixelFormat::begin32Bits && format < PixelFormat::begin64Bits) {
-            return 4;
-        }
-        if (format > PixelFormat::begin64Bits && format < PixelFormat::begin128Bits) {
-            return 8;
-        }
-        if (format > PixelFormat::begin128Bits && format < PixelFormat::max) {
-            return 16;
+        struct BytesPerPixelRange {
+            PixelFormat begin;
+            PixelFormat end;
+            size_t bytesPerPixel;
+        };
+        static constexpr BytesPerPixelRange ranges[] = {
+            { PixelFormat::begin8Bits,   PixelFormat::begin16Bits,  1 },
+            { PixelFormat::begin16Bits,  PixelFormat::begin32Bits,  2 },
+            { PixelFormat::begin32Bits,  PixelFormat::begin64Bits,  4 },
+            { PixelFormat::begin64Bits,  PixelFormat::begin128Bits, 8 },
+            { PixelFormat::begin128Bits, PixelFormat::max,          16 },
+        };
+
+        for (const auto& range : ranges) {
+            if (format > range.begin && format < range.end) {
+                return range.bytesPerPixel;
+            }
         }
         return Assert(false), 1;
     }
