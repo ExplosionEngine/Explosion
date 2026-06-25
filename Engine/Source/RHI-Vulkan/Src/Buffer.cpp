@@ -16,6 +16,9 @@ namespace RHI::Vulkan {
         : Buffer(inCreateInfo)
         , device(inDevice)
         , usages(inCreateInfo.usages)
+        , mapMode(MapMode::read)
+        , mapOffset(0)
+        , mapLength(0)
     {
         CreateNativeBuffer(inCreateInfo);
         TransitionToInitState(inCreateInfo);
@@ -28,15 +31,25 @@ namespace RHI::Vulkan {
         }
     }
 
-    void* VulkanBuffer::Map(MapMode inMapMode, size_t inOffset, size_t inLength)
+    void* VulkanBuffer::Map(const MapMode inMapMode, const size_t inOffset, const size_t inLength)
     {
+        mapMode = inMapMode;
+        mapOffset = inOffset;
+        mapLength = inLength;
+
         void* data;
         Assert(vmaMapMemory(device.GetNativeAllocator(), nativeAllocation, &data) == VK_SUCCESS);
-        return data;
+        if (inMapMode == MapMode::read) {
+            Assert(vmaInvalidateAllocation(device.GetNativeAllocator(), nativeAllocation, inOffset, inLength) == VK_SUCCESS);
+        }
+        return static_cast<uint8_t*>(data) + inOffset;
     }
 
     void VulkanBuffer::Unmap()
     {
+        if (mapMode == MapMode::write) {
+            Assert(vmaFlushAllocation(device.GetNativeAllocator(), nativeAllocation, mapOffset, mapLength) == VK_SUCCESS);
+        }
         vmaUnmapMemory(device.GetNativeAllocator(), nativeAllocation);
     }
 
@@ -55,8 +68,10 @@ namespace RHI::Vulkan {
 
         VmaAllocationCreateInfo allocInfo = {};
         allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-        if (inCreateInfo.usages | BufferUsageBits::mapWrite) {
+        if (inCreateInfo.usages & BufferUsageBits::mapWrite) {
             allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+        } else if (inCreateInfo.usages & BufferUsageBits::mapRead) {
+            allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
         }
 
         Assert(vmaCreateBuffer(device.GetNativeAllocator(), &bufferInfo, &allocInfo, &nativeBuffer, &nativeAllocation, nullptr) == VK_SUCCESS);
