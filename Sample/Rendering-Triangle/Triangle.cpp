@@ -286,7 +286,7 @@ void TriangleApplication::CreateTriangleVertexBuffer()
     if (triangleVertexBuffer != nullptr) {
         auto* data = triangleVertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
         memcpy(data, vertices.data(), bufferCreateInfo.size);
-        triangleVertexBuffer->UnMap();
+        triangleVertexBuffer->Unmap();
     }
 }
 

@@ -5,6 +5,7 @@
 #include <Render/RenderCache.h>
 
 #include <utility>
+#include <variant>
 
 #include <Common/IO.h>
 #include <Core/Thread.h>
@@ -12,6 +13,84 @@
 namespace Render::Internal {
     constexpr uint64_t resourceViewCacheReleaseFrameLatency = 2;
     constexpr uint64_t bindGroupCacheReleaseFrameLatency = 2;
+
+    static uint64_t CombineHashes(const std::vector<uint64_t>& hashes)
+    {
+        return Common::HashUtils::CityHash(hashes.data(), hashes.size() * sizeof(uint64_t));
+    }
+
+    template <typename T>
+    static uint64_t HashRhiState(const T& value)
+    {
+        return Common::HashUtils::CityHash(&value, sizeof(T));
+    }
+
+    static uint64_t HashRhiState(const RHI::MultiSampleState& state)
+    {
+        return CombineHashes({
+            static_cast<uint64_t>(state.count),
+            static_cast<uint64_t>(state.mask),
+            static_cast<uint64_t>(state.alphaToCoverage)
+        });
+    }
+
+    static uint64_t HashRhiState(const RHI::DepthStencilState& state)
+    {
+        return CombineHashes({
+            static_cast<uint64_t>(state.depthEnabled),
+            static_cast<uint64_t>(state.stencilEnabled),
+            static_cast<uint64_t>(state.format),
+            static_cast<uint64_t>(state.depthCompareFunc),
+            static_cast<uint64_t>(static_cast<uint32_t>(state.depthBias)),
+            HashRhiState(state.depthBiasSlopeScale),
+            HashRhiState(state.depthBiasClamp),
+            HashRhiState(state.stencilFront),
+            HashRhiState(state.stencilBack),
+            static_cast<uint64_t>(state.stencilReadMask),
+            static_cast<uint64_t>(state.stencilWriteMask)
+        });
+    }
+
+    static uint64_t HashRhiState(const RHI::BufferViewCreateInfo& createInfo)
+    {
+        const uint64_t extendHash = std::visit(
+            [](const auto& alternative) -> uint64_t { return HashRhiState(alternative); },
+            createInfo.extend);
+        return CombineHashes({
+            static_cast<uint64_t>(createInfo.type),
+            static_cast<uint64_t>(createInfo.size),
+            static_cast<uint64_t>(createInfo.offset),
+            static_cast<uint64_t>(createInfo.extend.index()),
+            extendHash
+        });
+    }
+
+    static uint64_t HashRhiState(const RHI::SamplerCreateInfo& createInfo)
+    {
+        return CombineHashes({
+            static_cast<uint64_t>(createInfo.addressModeU),
+            static_cast<uint64_t>(createInfo.addressModeV),
+            static_cast<uint64_t>(createInfo.addressModeW),
+            static_cast<uint64_t>(createInfo.magFilter),
+            static_cast<uint64_t>(createInfo.minFilter),
+            static_cast<uint64_t>(createInfo.mipFilter),
+            HashRhiState(createInfo.lodMinClamp),
+            HashRhiState(createInfo.lodMaxClamp),
+            static_cast<uint64_t>(createInfo.comparisonFunc),
+            static_cast<uint64_t>(createInfo.maxAnisotropy)
+        });
+    }
+
+    // FragmentState owns a vector of color targets, so it cannot be hashed as a flat blob like the other states.
+    static uint64_t HashRhiState(const RHI::FragmentState& fragmentState)
+    {
+        std::vector<uint64_t> values;
+        values.reserve(fragmentState.colorTargets.size());
+        for (const auto& colorTarget : fragmentState.colorTargets) {
+            values.emplace_back(HashRhiState(colorTarget));
+        }
+        return CombineHashes(values);
+    }
 }
 
 namespace Render {
@@ -287,10 +366,10 @@ namespace Render {
         const std::vector<uint64_t> values = {
             shaders.Hash(),
             vertexState.Hash(),
-            primitiveState.Hash(),
-            depthStencilState.Hash(),
-            multiSampleState.Hash(),
-            fragmentState.Hash()
+            Internal::HashRhiState(primitiveState),
+            Internal::HashRhiState(depthStencilState),
+            Internal::HashRhiState(multiSampleState),
+            Internal::HashRhiState(fragmentState)
         };
         return Common::HashUtils::CityHash(values.data(), values.size() * sizeof(uint64_t));
     }
@@ -534,7 +613,7 @@ namespace Render {
 
     Sampler* SamplerCache::GetOrCreate(const RSamplerDesc& desc)
     {
-        const size_t hash = Common::HashUtils::CityHash(&desc, sizeof(RSamplerDesc));
+        const size_t hash = Internal::HashRhiState(desc);
         if (const auto iter = samplers.find(hash);
             iter == samplers.end()) {
             samplers[hash] = Common::UniquePtr(new Sampler(device, desc));
@@ -614,7 +693,7 @@ namespace Render {
     {
         auto& views = bufferViewCaches[buffer].views;
 
-        auto hash = inDesc.Hash();
+        auto hash = Internal::HashRhiState(inDesc);
         if (const auto iter = views.find(hash);
             iter == views.end()) {
             views.emplace(std::make_pair(hash, Common::UniquePtr(buffer->CreateBufferView(inDesc))));
@@ -626,7 +705,7 @@ namespace Render {
     {
         auto& views = textureViewCaches[texture].views;
 
-        auto hash = inDesc.Hash();
+        auto hash = Internal::HashRhiState(inDesc);
         if (const auto iter = views.find(hash);
             iter == views.end()) {
             views.emplace(std::make_pair(hash, Common::UniquePtr(texture->CreateTextureView(inDesc))));

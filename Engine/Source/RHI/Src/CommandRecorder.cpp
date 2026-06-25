@@ -194,7 +194,7 @@ namespace RHI {
 
     CommandRecorder::~CommandRecorder() = default;
 
-    CommandCommandRecorder::~CommandCommandRecorder() = default;
+    CommonCommandRecorder::~CommonCommandRecorder() = default;
 
     CopyPassCommandRecorder::CopyPassCommandRecorder() = default;
 

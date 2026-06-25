@@ -7,21 +7,27 @@ struct FragmentInput {
 
 #if VERTEX_SHADER
 cbuffer vsUniform {
-    float3 vertexColor;
+    float rotation;
 };
 
 FragmentInput VSMain(
     uint vertexId : SV_VertexID,
     VkLocation(0) float3 position : POSITION)
 {
+    const float sinR = sin(rotation);
+    const float cosR = cos(rotation);
+    const float2 rotated = float2(
+        position.x * cosR - position.y * sinR,
+        position.x * sinR + position.y * cosR);
+
     FragmentInput fragmentInput;
-    fragmentInput.position = float4(position.xyz, 1.0f);
+    fragmentInput.position = float4(rotated, position.z, 1.0f);
 #if VULKAN
     fragmentInput.position.y = - fragmentInput.position.y;
 #endif
 
     fragmentInput.color = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    fragmentInput.color[vertexId % 3] = vertexColor[vertexId % 3];
+    fragmentInput.color[vertexId % 3] = 1.0f;
     return fragmentInput;
 }
 #endif

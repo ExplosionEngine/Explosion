@@ -26,8 +26,6 @@ namespace RHI {
         BufferCreateInfo& SetInitialState(BufferState inState);
         BufferCreateInfo& SetDebugName(std::string inDebugName);
 
-        uint64_t Hash() const;
-
         bool operator==(const BufferCreateInfo& rhs) const;
     };
 
@@ -38,7 +36,7 @@ namespace RHI {
 
         const BufferCreateInfo& GetCreateInfo() const;
         virtual void* Map(MapMode mapMode, size_t offset, size_t length) = 0;
-        virtual void UnMap() = 0;
+        virtual void Unmap() = 0;
         virtual Common::UniquePtr<BufferView> CreateBufferView(const BufferViewCreateInfo& createInfo) = 0;
 
     protected:

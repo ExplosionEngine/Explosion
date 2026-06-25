@@ -47,7 +47,7 @@ protected:
 
         auto* pMap = uniformBuffers.sceneParams.buf->Map(MapMode::write, 0, sizeof(UBOSceneParams));
         memcpy(pMap, &uboSceneParams, sizeof(UBOSceneParams));
-        uniformBuffers.sceneParams.buf->UnMap();
+        uniformBuffers.sceneParams.buf->Unmap();
 
         inflightFences[nextFrameIndex]->Wait();
         const auto backTextureIndex = swapChain->AcquireBackTexture(backBufferReadySemaphores[nextFrameIndex].Get());
@@ -252,7 +252,7 @@ private:
                     auto* dst = static_cast<uint8_t*>(data) + i * copyFootprint.rowPitch;
                     memcpy(dst, src, srcRowPitch);
                 }
-                pixelBuffer->UnMap();
+                pixelBuffer->Unmap();
             }
 
             const UniquePtr<CommandBuffer> texCommandBuffer = device.CreateCommandBuffer();
@@ -455,7 +455,7 @@ private:
         Assert(vertexBuffer != nullptr);
         auto* data = vertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
         memcpy(data, model->rawVertBuffer.data(), bufferCreateInfo.size);
-        vertexBuffer->UnMap();
+        vertexBuffer->Unmap();
 
         const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
             .SetType(BufferViewType::vertex)
@@ -476,7 +476,7 @@ private:
         Assert(indexBuffer != nullptr);
         auto* data = indexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
         memcpy(data, model->rawIndBuffer.data(), bufferCreateInfo.size);
-        indexBuffer->UnMap();
+        indexBuffer->Unmap();
 
         const BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
             .SetType(BufferViewType::index)
@@ -505,7 +505,7 @@ private:
         if (quadVertexBuffer != nullptr) {
             auto* data = quadVertexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, vertices.data(), bufferCreateInfo.size);
-            quadVertexBuffer->UnMap();
+            quadVertexBuffer->Unmap();
         }
 
         BufferViewCreateInfo bufferViewCreateInfo = BufferViewCreateInfo()
@@ -526,7 +526,7 @@ private:
         if (quadIndexBuffer != nullptr) {
             auto* data = quadIndexBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, indices.data(), bufferCreateInfo.size);
-            quadIndexBuffer->UnMap();
+            quadIndexBuffer->Unmap();
         }
 
         bufferViewCreateInfo = BufferViewCreateInfo()
@@ -762,7 +762,7 @@ private:
         if (pixelBuffer != nullptr) {
             auto* data = pixelBuffer->Map(MapMode::write, 0, bufferCreateInfo.size);
             memcpy(data, ssaoNoise.data(), bufferCreateInfo.size);
-            pixelBuffer->UnMap();
+            pixelBuffer->Unmap();
         }
 
         noise.tex = device->CreateTexture(
@@ -885,7 +885,7 @@ private:
         if (uBuffer->buf != nullptr && data != nullptr) {
             auto* mapData = uBuffer->buf->Map(MapMode::write, 0, size);
             memcpy(mapData, data, size);
-            uBuffer->buf->UnMap();
+            uBuffer->buf->Unmap();
         }
 
         const BufferViewCreateInfo viewCreateInfo = BufferViewCreateInfo()

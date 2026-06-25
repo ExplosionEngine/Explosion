@@ -8,7 +8,6 @@
 #include <variant>
 
 #include <Common/Utility.h>
-#include <Common/Hash.h>
 #include <RHI/Common.h>
 
 namespace RHI {
@@ -48,8 +47,6 @@ namespace RHI {
         BufferViewCreateInfo& SetExtendVertex(uint32_t inStride);
         BufferViewCreateInfo& SetExtendIndex(IndexFormat inFormat);
         BufferViewCreateInfo& SetExtendStorage(uint32_t inStride);
-
-        uint64_t Hash() const;
     };
 
     class BufferView {

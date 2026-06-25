@@ -134,8 +134,8 @@ namespace RHI::Vulkan {
 
     ECIMPL_BEGIN(BlendOp, VkBlendOp)
         ECIMPL_ITEM(BlendOp::opAdd,              VK_BLEND_OP_ADD)
-        ECIMPL_ITEM(BlendOp::opSubstract,        VK_BLEND_OP_SUBTRACT)
-        ECIMPL_ITEM(BlendOp::opReverseSubstract, VK_BLEND_OP_REVERSE_SUBTRACT)
+        ECIMPL_ITEM(BlendOp::opSubtract,        VK_BLEND_OP_SUBTRACT)
+        ECIMPL_ITEM(BlendOp::opReverseSubtract, VK_BLEND_OP_REVERSE_SUBTRACT)
         ECIMPL_ITEM(BlendOp::opMin,              VK_BLEND_OP_MIN)
         ECIMPL_ITEM(BlendOp::opMax,              VK_BLEND_OP_MAX)
     ECIMPL_END(VkBlendOp)

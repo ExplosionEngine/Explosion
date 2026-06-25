@@ -37,8 +37,6 @@ namespace RHI {
         TextureCreateInfo& SetInitialState(TextureState inState);
         TextureCreateInfo& SetDebugName(std::string inDebugName);
 
-        uint64_t Hash() const;
-
         bool operator==(const TextureCreateInfo& rhs) const;
     };
 

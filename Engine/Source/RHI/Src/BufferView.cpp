@@ -68,11 +68,6 @@ namespace RHI {
         return *this;
     }
 
-    uint64_t BufferViewCreateInfo::Hash() const
-    {
-        return Common::HashUtils::CityHash(this, sizeof(BufferViewCreateInfo));
-    }
-
     BufferView::BufferView(const BufferViewCreateInfo&) {}
 
     BufferView::~BufferView() = default;

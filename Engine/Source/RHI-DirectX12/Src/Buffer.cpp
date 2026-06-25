@@ -83,7 +83,7 @@ namespace RHI::DirectX12 {
         return data;
     }
 
-    void DX12Buffer::UnMap()
+    void DX12Buffer::Unmap()
     {
         nativeResource->Unmap(0, nullptr);
     }

@@ -8,7 +8,7 @@ import { Chip } from '@heroui/chip';
 import { Listbox, ListboxItem } from '@heroui/listbox';
 import { Avatar } from '@heroui/avatar';
 import { ScrollShadow } from '@heroui/scroll-shadow';
-import { Select, SelectItem } from '@heroui/react';
+import { Select, SelectItem, addToast } from '@heroui/react';
 import { QWebChannel } from '@/qwebchannel';
 
 interface RecentProjectInfo {
@@ -21,11 +21,20 @@ interface ProjectTemplateInfo {
   path: string;
 }
 
+interface CreateProjectResult {
+  success: boolean;
+  error: string;
+  projectPath: string;
+}
+
 export default function ProjectHubPage() {
   const [engineVersion, setEngineVersion] = useState('');
   const [recentProjects, setRecentProjects] = useState(Array<RecentProjectInfo>);
   const [projectTemplates, setProjectTemplates] = useState(Array<ProjectTemplateInfo>);
+  const [projectName, setProjectName] = useState('');
   const [projectPath, setProjectPath] = useState('');
+  const [projectTemplate, setProjectTemplate] = useState('0');
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     new QWebChannel(window.qt.webChannelTransport, (channel: QWebChannel): void => {
@@ -33,19 +42,40 @@ export default function ProjectHubPage() {
       setEngineVersion(window.backend.engineVersion);
       setRecentProjects(window.backend.recentProjects);
       setProjectTemplates(window.backend.projectTemplates);
+      window.backend.RecentProjectsChanged.connect(() => {
+        setRecentProjects(window.backend.recentProjects);
+      });
     });
   }, []);
 
   function onCreateProject(): void {
-    // TODO
-    console.error("onCreateProject()");
-    window.backend.CreateProject();
+    const template = projectTemplates[parseInt(projectTemplate)];
+    if (!projectName || !projectPath || !template) {
+      addToast({ title: 'Cannot create project', description: 'Please fill in the project name, path and template.', color: 'warning' });
+      return;
+    }
+
+    setIsCreating(true);
+    window.backend.CreateProject(projectName, projectPath, template.path, (result: CreateProjectResult) => {
+      setIsCreating(false);
+      if (!result.success) {
+        addToast({ title: 'Failed to create project', description: result.error, color: 'danger' });
+        return;
+      }
+      addToast({ title: 'Project created', description: `${projectName} has been created.`, color: 'success' });
+      setProjectName('');
+      setProjectPath('');
+      openProject(result.projectPath);
+    });
   }
 
   function onOpenProject(e: PressEvent): void {
-    // TODO
     const index = parseInt(e.target.getAttribute('data-key') as string);
-    console.error('onOpenProject:', index);
+    openProject(recentProjects[index].path);
+  }
+
+  function openProject(path: string): void {
+    window.backend.OpenProject(path);
   }
 
   function onBrowseProjectPath(): void {
@@ -92,19 +122,26 @@ export default function ProjectHubPage() {
         </Tab>
         <Tab className='w-full pr-6' title='New Project'>
           <Form className='w-full ml-4'>
-            <Input fullWidth isRequired label='Project Name' labelPlacement='outside' placeholder='HelloExplosion' />
+            <Input fullWidth isRequired label='Project Name' labelPlacement='outside' placeholder='HelloExplosion' value={projectName} onValueChange={setProjectName} />
             <div className='flex w-full'>
-              <Input isRequired label='Project Path' labelPlacement='outside' placeholder='/path/to/your/project' value={projectPath} onValueChange={setProjectPath} />
+              <Input isRequired label='Project Path' labelPlacement='outside' placeholder='/path/to/parent/directory' value={projectPath} onValueChange={setProjectPath} />
               <Button className='ml-2 mt-6' onPress={() => onBrowseProjectPath()}>
                 Browse
               </Button>
             </div>
-            <Select fullWidth isRequired defaultSelectedKeys={['0']} label='Project Template' labelPlacement='outside'>
+            <Select
+              fullWidth
+              isRequired
+              label='Project Template'
+              labelPlacement='outside'
+              selectedKeys={[projectTemplate]}
+              onSelectionChange={(keys) => setProjectTemplate(Array.from(keys as Set<string>)[0] ?? '0')}
+            >
               {projectTemplates.map((item, i) => (
                 <SelectItem key={i}>{item.name}</SelectItem>
               ))}
             </Select>
-            <Button color='primary' onPress={onCreateProject}>
+            <Button color='primary' isLoading={isCreating} onPress={onCreateProject}>
               Create
             </Button>
           </Form>

@@ -36,7 +36,7 @@ namespace RHI::DirectX12 {
         explicit DX12CopyPassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer);
         ~DX12CopyPassCommandRecorder() override;
 
-        // CommandCommandRecorder
+        // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
 
         // CopyPassCommandRecorder
@@ -58,7 +58,7 @@ namespace RHI::DirectX12 {
         explicit DX12ComputePassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer);
         ~DX12ComputePassCommandRecorder() override;
 
-        // CommandCommandRecorder
+        // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
 
         // ComputePassCommandRecorder
@@ -80,7 +80,7 @@ namespace RHI::DirectX12 {
         explicit DX12RasterPassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer, const RasterPassBeginInfo& inBeginInfo);
         ~DX12RasterPassCommandRecorder() override;
 
-        // CommandCommandRecorder
+        // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
 
         // RasterPassCommandRecorder
