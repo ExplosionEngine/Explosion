@@ -27,7 +27,8 @@ namespace RHI::Vulkan {
             { BufferState::copyDst, VK_ACCESS_TRANSFER_WRITE_BIT },
             { BufferState::shaderReadOnly, VK_ACCESS_SHADER_READ_BIT },
             { BufferState::storage, VK_ACCESS_SHADER_READ_BIT },
-            { BufferState::rwStorage, VK_ACCESS_SHADER_WRITE_BIT }
+            { BufferState::rwStorage, VK_ACCESS_SHADER_WRITE_BIT },
+            { BufferState::indirect, VK_ACCESS_INDIRECT_COMMAND_READ_BIT }
         };
         return map.at(inState);
     }
@@ -41,8 +42,8 @@ namespace RHI::Vulkan {
             { BufferState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
             { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
             { BufferState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
-            { BufferState::rwStorage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
-
+            { BufferState::rwStorage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { BufferState::indirect, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT }
         };
         return map.at(inState);
     }
@@ -56,7 +57,8 @@ namespace RHI::Vulkan {
             { BufferState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
             { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
             { BufferState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
-            { BufferState::rwStorage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
+            { BufferState::rwStorage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { BufferState::indirect, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT }
         };
         return map.at(inState);
     }
@@ -492,6 +494,28 @@ namespace RHI::Vulkan {
     {
         // TODO stencil face;
         vkCmdSetStencilReference(commandBuffer.GetNative(), VK_STENCIL_FACE_FRONT_AND_BACK, inReference);
+    }
+
+    void VulkanRasterPassCommandRecorder::DrawIndirect(Buffer* inIndirectBuffer, const size_t inOffset)
+    {
+        MultiDrawIndirect(inIndirectBuffer, inOffset, 1);
+    }
+
+    void VulkanRasterPassCommandRecorder::DrawIndexedIndirect(Buffer* inIndirectBuffer, const size_t inOffset)
+    {
+        MultiDrawIndexedIndirect(inIndirectBuffer, inOffset, 1);
+    }
+
+    void VulkanRasterPassCommandRecorder::MultiDrawIndirect(Buffer* inIndirectBuffer, const size_t inOffset, const size_t inDrawCount)
+    {
+        const auto* indirectBuffer = static_cast<VulkanBuffer*>(inIndirectBuffer);
+        vkCmdDrawIndirect(commandBuffer.GetNative(), indirectBuffer->GetNative(), inOffset, inDrawCount, sizeof(DrawIndirectArguments));
+    }
+
+    void VulkanRasterPassCommandRecorder::MultiDrawIndexedIndirect(Buffer* inIndirectBuffer, const size_t inOffset, const size_t inDrawCount)
+    {
+        const auto* indirectBuffer = static_cast<VulkanBuffer*>(inIndirectBuffer);
+        vkCmdDrawIndexedIndirect(commandBuffer.GetNative(), indirectBuffer->GetNative(), inOffset, inDrawCount, sizeof(DrawIndexedIndirectArguments));
     }
 
     void VulkanRasterPassCommandRecorder::EndPass()

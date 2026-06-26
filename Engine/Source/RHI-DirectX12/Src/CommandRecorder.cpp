@@ -331,6 +331,28 @@ namespace RHI::DirectX12 {
         commandBuffer.GetNativeCmdList()->OMSetStencilRef(inReference);
     }
 
+    void DX12RasterPassCommandRecorder::DrawIndirect(Buffer* inIndirectBuffer, const size_t inOffset)
+    {
+        MultiDrawIndirect(inIndirectBuffer, inOffset, 1);
+    }
+
+    void DX12RasterPassCommandRecorder::DrawIndexedIndirect(Buffer* inIndirectBuffer, const size_t inOffset)
+    {
+        MultiDrawIndexedIndirect(inIndirectBuffer, inOffset, 1);
+    }
+
+    void DX12RasterPassCommandRecorder::MultiDrawIndirect(Buffer* inIndirectBuffer, const size_t inOffset, const size_t inDrawCount)
+    {
+        const auto* indirectBuffer = static_cast<DX12Buffer*>(inIndirectBuffer);
+        commandBuffer.GetNativeCmdList()->ExecuteIndirect(device.GetDrawIndirectCommandSignature(), inDrawCount, indirectBuffer->GetNative(), inOffset, nullptr, 0);
+    }
+
+    void DX12RasterPassCommandRecorder::MultiDrawIndexedIndirect(Buffer* inIndirectBuffer, const size_t inOffset, const size_t inDrawCount)
+    {
+        const auto* indirectBuffer = static_cast<DX12Buffer*>(inIndirectBuffer);
+        commandBuffer.GetNativeCmdList()->ExecuteIndirect(device.GetDrawIndexedIndirectCommandSignature(), inDrawCount, indirectBuffer->GetNative(), inOffset, nullptr, 0);
+    }
+
     void DX12RasterPassCommandRecorder::EndPass()
     {
     }

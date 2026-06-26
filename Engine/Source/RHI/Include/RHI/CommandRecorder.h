@@ -92,6 +92,21 @@ namespace RHI {
         BufferTextureCopyInfo& SetCopyRegion(const Common::UVec3& inCopyRegion);
     };
 
+    struct DrawIndirectArguments {
+        uint32_t vertexCount = 0;
+        uint32_t instanceCount = 0;
+        uint32_t firstVertex = 0;
+        uint32_t firstInstance = 0;
+    };
+
+    struct DrawIndexedIndirectArguments {
+        uint32_t indexCount = 0;
+        uint32_t instanceCount = 0;
+        uint32_t firstIndex = 0;
+        int32_t baseVertex = 0;
+        uint32_t firstInstance = 0;
+    };
+
     template <typename Derived>
     struct ColorAttachmentBase {
         LoadOp loadOp;
@@ -232,9 +247,10 @@ namespace RHI {
         virtual void SetPrimitiveTopology(PrimitiveTopology primitiveTopology) = 0;
         virtual void SetBlendConstant(const float*/*[4]*/ constants) = 0;
         virtual void SetStencilReference(uint32_t reference) = 0;
-        // TODO DrawIndirect(...)
-        // TODO DrawIndexedIndirect(...)
-        // TODO MultiIndirectDraw(...)
+        virtual void DrawIndirect(Buffer* indirectBuffer, size_t offset) = 0;
+        virtual void DrawIndexedIndirect(Buffer* indirectBuffer, size_t offset) = 0;
+        virtual void MultiDrawIndirect(Buffer* indirectBuffer, size_t offset, size_t drawCount) = 0;
+        virtual void MultiDrawIndexedIndirect(Buffer* indirectBuffer, size_t offset, size_t drawCount) = 0;
         virtual void EndPass() = 0;
 
     protected:

@@ -79,6 +79,10 @@ namespace RHI::Dummy {
         void SetPrimitiveTopology(PrimitiveTopology primitiveTopology) override;
         void SetBlendConstant(const float*/*[4]*/ constants) override;
         void SetStencilReference(uint32_t reference) override;
+        void DrawIndirect(Buffer* indirectBuffer, size_t offset) override;
+        void DrawIndexedIndirect(Buffer* indirectBuffer, size_t offset) override;
+        void MultiDrawIndirect(Buffer* indirectBuffer, size_t offset, size_t drawCount) override;
+        void MultiDrawIndexedIndirect(Buffer* indirectBuffer, size_t offset, size_t drawCount) override;
         void EndPass() override;
     };
 }

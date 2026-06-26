@@ -95,6 +95,8 @@ namespace RHI::DirectX12 {
         TextureSubResourceCopyFootprint GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo) override;
 
         ID3D12Device* GetNative() const;
+        ID3D12CommandSignature* GetDrawIndirectCommandSignature() const;
+        ID3D12CommandSignature* GetDrawIndexedIndirectCommandSignature() const;
         Common::UniquePtr<DescriptorAllocation> AllocateRtvDescriptor() const;
         Common::UniquePtr<DescriptorAllocation> AllocateCbvSrvUavDescriptor() const;
         Common::UniquePtr<DescriptorAllocation> AllocateSamplerDescriptor() const;
@@ -105,6 +107,7 @@ namespace RHI::DirectX12 {
         void CreateNativeQueues(const DeviceCreateInfo& inCreateInfo);
         void QueryNativeDescriptorSize();
         void CreateDescriptorPools();
+        void CreateDrawIndirectCommandSignatures();
 #if BUILD_CONFIG_DEBUG
         void RegisterNativeDebugLayerExceptionHandler();
         void UnregisterNativeDebugLayerExceptionHandler();
@@ -122,5 +125,7 @@ namespace RHI::DirectX12 {
         Common::UniquePtr<DescriptorPool> samplerDescriptorPool;
         Common::UniquePtr<DescriptorPool> dsvDescriptorPool;
         ComPtr<ID3D12Device> nativeDevice;
+        ComPtr<ID3D12CommandSignature> drawIndirectCommandSignature;
+        ComPtr<ID3D12CommandSignature> drawIndexedIndirectCommandSignature;
     };
 }

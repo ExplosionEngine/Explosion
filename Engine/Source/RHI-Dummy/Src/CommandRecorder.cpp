@@ -117,6 +117,22 @@ namespace RHI::Dummy {
     {
     }
 
+    void DummyRasterPassCommandRecorder::DrawIndirect(Buffer* indirectBuffer, size_t offset)
+    {
+    }
+
+    void DummyRasterPassCommandRecorder::DrawIndexedIndirect(Buffer* indirectBuffer, size_t offset)
+    {
+    }
+
+    void DummyRasterPassCommandRecorder::MultiDrawIndirect(Buffer* indirectBuffer, size_t offset, size_t drawCount)
+    {
+    }
+
+    void DummyRasterPassCommandRecorder::MultiDrawIndexedIndirect(Buffer* indirectBuffer, size_t offset, size_t drawCount)
+    {
+    }
+
     void DummyRasterPassCommandRecorder::EndPass()
     {
     }

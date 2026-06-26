@@ -97,6 +97,10 @@ namespace RHI::Vulkan {
         void SetPrimitiveTopology(PrimitiveTopology inPrimitiveTopology) override;
         void SetBlendConstant(const float* inConstants) override;
         void SetStencilReference(uint32_t inReference) override;
+        void DrawIndirect(Buffer* inIndirectBuffer, size_t inOffset) override;
+        void DrawIndexedIndirect(Buffer* inIndirectBuffer, size_t inOffset) override;
+        void MultiDrawIndirect(Buffer* inIndirectBuffer, size_t inOffset, size_t inDrawCount) override;
+        void MultiDrawIndexedIndirect(Buffer* inIndirectBuffer, size_t inOffset, size_t inDrawCount) override;
         void EndPass() override;
 
     private:

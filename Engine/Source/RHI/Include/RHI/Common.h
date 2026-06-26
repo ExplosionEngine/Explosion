@@ -392,6 +392,7 @@ namespace RHI {
         shaderReadOnly,
         storage,
         rwStorage,
+        indirect,
         max
     };
 

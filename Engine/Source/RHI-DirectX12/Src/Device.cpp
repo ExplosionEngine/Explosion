@@ -24,6 +24,7 @@
 #include <RHI/DirectX12/SwapChain.h>
 #include <RHI/DirectX12/Synchronous.h>
 #include <RHI/DirectX12/Surface.h>
+#include <RHI/CommandRecorder.h>
 #include <Core/Log.h>
 
 namespace RHI::DirectX12 {
@@ -152,6 +153,7 @@ namespace RHI::DirectX12 {
         CreateNativeQueues(inCreateInfo);
         QueryNativeDescriptorSize();
         CreateDescriptorPools();
+        CreateDrawIndirectCommandSignatures();
 #if BUILD_CONFIG_DEBUG
         RegisterNativeDebugLayerExceptionHandler();
 #endif
@@ -287,6 +289,16 @@ namespace RHI::DirectX12 {
         return nativeDevice.Get();
     }
 
+    ID3D12CommandSignature* DX12Device::GetDrawIndirectCommandSignature() const
+    {
+        return drawIndirectCommandSignature.Get();
+    }
+
+    ID3D12CommandSignature* DX12Device::GetDrawIndexedIndirectCommandSignature() const
+    {
+        return drawIndexedIndirectCommandSignature.Get();
+    }
+
     Common::UniquePtr<DescriptorAllocation> DX12Device::AllocateRtvDescriptor() const
     {
         return rtvDescriptorPool->Allocate();
@@ -354,6 +366,28 @@ namespace RHI::DirectX12 {
         cbvSrvUavDescriptorPool = Common::MakeUnique<DescriptorPool>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, nativeCbvSrvUavDescriptorSize, 16);
         samplerDescriptorPool = Common::MakeUnique<DescriptorPool>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, nativeSamplerDescriptorSize, 16);
         dsvDescriptorPool = Common::MakeUnique<DescriptorPool>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, nativeDsvDescriptorSize, 16);
+    }
+
+    void DX12Device::CreateDrawIndirectCommandSignatures()
+    {
+        const auto createSignature = [this](const D3D12_INDIRECT_ARGUMENT_TYPE inArgumentType, const uint32_t inStride) -> ComPtr<ID3D12CommandSignature> {
+            D3D12_INDIRECT_ARGUMENT_DESC argumentDesc {};
+            argumentDesc.Type = inArgumentType;
+
+            D3D12_COMMAND_SIGNATURE_DESC commandSignatureDesc {};
+            commandSignatureDesc.ByteStride = inStride;
+            commandSignatureDesc.NumArgumentDescs = 1;
+            commandSignatureDesc.pArgumentDescs = &argumentDesc;
+            commandSignatureDesc.NodeMask = 0;
+
+            // A command signature carrying only a draw argument changes no root parameters, so no root signature is required.
+            ComPtr<ID3D12CommandSignature> commandSignature;
+            Assert(SUCCEEDED(nativeDevice->CreateCommandSignature(&commandSignatureDesc, nullptr, IID_PPV_ARGS(&commandSignature))));
+            return commandSignature;
+        };
+
+        drawIndirectCommandSignature = createSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW, sizeof(DrawIndirectArguments));
+        drawIndexedIndirectCommandSignature = createSignature(D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED, sizeof(DrawIndexedIndirectArguments));
     }
 
 #if BUILD_CONFIG_DEBUG
