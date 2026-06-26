@@ -48,12 +48,14 @@ namespace RHI::DirectX12 {
     {
         const auto aspectLayout = device.GetTextureSubResourceCopyFootprint(texture, copyInfo.textureSubResource); // NOLINT
 
+        // The buffer is laid out as the full sub-resource footprint (so the slice stride is RowPitch * full height);
+        // the copied window is selected by the box passed to CopyTextureRegion, not by shrinking this footprint.
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT bufferLayout;
         bufferLayout.Offset = copyInfo.bufferOffset;
         bufferLayout.Footprint.Format = texture.GetNative()->GetDesc().Format;
-        bufferLayout.Footprint.Width = copyInfo.copyRegion.x;
-        bufferLayout.Footprint.Height = copyInfo.copyRegion.y;
-        bufferLayout.Footprint.Depth = copyInfo.copyRegion.z;
+        bufferLayout.Footprint.Width = aspectLayout.extent.x;
+        bufferLayout.Footprint.Height = aspectLayout.extent.y;
+        bufferLayout.Footprint.Depth = aspectLayout.extent.z;
         bufferLayout.Footprint.RowPitch = aspectLayout.rowPitch;
         return { buffer.GetNative(), bufferLayout };
     }
