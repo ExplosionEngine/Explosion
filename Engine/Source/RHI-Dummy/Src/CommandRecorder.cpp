@@ -17,6 +17,14 @@ namespace RHI::Dummy {
     {
     }
 
+    void DummyCopyPassCommandRecorder::BeginMarker(const std::string& label)
+    {
+    }
+
+    void DummyCopyPassCommandRecorder::EndMarker()
+    {
+    }
+
     void DummyCopyPassCommandRecorder::CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo)
     {
     }
@@ -47,6 +55,14 @@ namespace RHI::Dummy {
     {
     }
 
+    void DummyComputePassCommandRecorder::BeginMarker(const std::string& label)
+    {
+    }
+
+    void DummyComputePassCommandRecorder::EndMarker()
+    {
+    }
+
     void DummyComputePassCommandRecorder::SetPipeline(ComputePipeline* pipeline)
     {
     }
@@ -70,6 +86,14 @@ namespace RHI::Dummy {
     DummyRasterPassCommandRecorder::~DummyRasterPassCommandRecorder() = default;
 
     void DummyRasterPassCommandRecorder::ResourceBarrier(const Barrier& barrier)
+    {
+    }
+
+    void DummyRasterPassCommandRecorder::BeginMarker(const std::string& label)
+    {
+    }
+
+    void DummyRasterPassCommandRecorder::EndMarker()
     {
     }
 
@@ -145,6 +169,14 @@ namespace RHI::Dummy {
     DummyCommandRecorder::~DummyCommandRecorder() = default;
 
     void DummyCommandRecorder::ResourceBarrier(const Barrier& barrier)
+    {
+    }
+
+    void DummyCommandRecorder::BeginMarker(const std::string& label)
+    {
+    }
+
+    void DummyCommandRecorder::EndMarker()
     {
     }
 

@@ -73,6 +73,12 @@ namespace RHI::DirectX12 {
     }
 }
 
+namespace RHI::DirectX12::Internal {
+    // PIX_EVENT_ANSI_VERSION: marks the BeginEvent payload as a plain ANSI string, decoded by RenderDoc/PIX without the
+    // WinPixEventRuntime dependency.
+    constexpr UINT pixEventAnsiVersion = 1;
+}
+
 namespace RHI::DirectX12 {
     DX12CopyPassCommandRecorder::DX12CopyPassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer)
         : device(inDevice)
@@ -86,6 +92,16 @@ namespace RHI::DirectX12 {
     void DX12CopyPassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
         commandRecorder.ResourceBarrier(inBarrier);
+    }
+
+    void DX12CopyPassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void DX12CopyPassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
     }
 
     void DX12CopyPassCommandRecorder::CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo)
@@ -170,6 +186,16 @@ namespace RHI::DirectX12 {
         commandRecorder.ResourceBarrier(inBarrier);
     }
 
+    void DX12ComputePassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void DX12ComputePassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
+    }
+
     void DX12ComputePassCommandRecorder::SetPipeline(ComputePipeline* inPipeline)
     {
         computePipeline = static_cast<DX12ComputePipeline*>(inPipeline);
@@ -251,6 +277,16 @@ namespace RHI::DirectX12 {
     void DX12RasterPassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
         commandRecorder.ResourceBarrier(inBarrier);
+    }
+
+    void DX12RasterPassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void DX12RasterPassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
     }
 
     void DX12RasterPassCommandRecorder::SetPipeline(RasterPipeline* inPipeline)
@@ -405,6 +441,20 @@ namespace RHI::DirectX12 {
 
         const CD3DX12_RESOURCE_BARRIER resourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState);
         commandBuffer.GetNativeCmdList()->ResourceBarrier(1, &resourceBarrier);
+    }
+
+    void DX12CommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+#if BUILD_CONFIG_DEBUG
+        commandBuffer.GetNativeCmdList()->BeginEvent(Internal::pixEventAnsiVersion, inLabel.c_str(), static_cast<UINT>(inLabel.size() + 1));
+#endif
+    }
+
+    void DX12CommandRecorder::EndMarker()
+    {
+#if BUILD_CONFIG_DEBUG
+        commandBuffer.GetNativeCmdList()->EndEvent();
+#endif
     }
 
     Common::UniquePtr<CopyPassCommandRecorder> DX12CommandRecorder::BeginCopyPass()

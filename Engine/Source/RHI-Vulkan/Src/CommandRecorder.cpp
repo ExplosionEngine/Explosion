@@ -209,6 +209,26 @@ namespace RHI::Vulkan {
         }
     }
 
+    void VulkanCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+#if BUILD_CONFIG_DEBUG
+        VkDebugUtilsLabelEXT labelInfo = { VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT };
+        labelInfo.pLabelName = inLabel.c_str();
+        labelInfo.color[0] = labelInfo.color[1] = labelInfo.color[2] = labelInfo.color[3] = 1.0f;
+
+        auto* pfn = device.GetGpu().GetInstance().FindOrGetTypedDynamicFuncPointer<PFN_vkCmdBeginDebugUtilsLabelEXT>("vkCmdBeginDebugUtilsLabelEXT");
+        pfn(commandBuffer.GetNative(), &labelInfo);
+#endif
+    }
+
+    void VulkanCommandRecorder::EndMarker()
+    {
+#if BUILD_CONFIG_DEBUG
+        auto* pfn = device.GetGpu().GetInstance().FindOrGetTypedDynamicFuncPointer<PFN_vkCmdEndDebugUtilsLabelEXT>("vkCmdEndDebugUtilsLabelEXT");
+        pfn(commandBuffer.GetNative());
+#endif
+    }
+
     Common::UniquePtr<CopyPassCommandRecorder> VulkanCommandRecorder::BeginCopyPass()
     {
         return Common::UniquePtr<CopyPassCommandRecorder>(new VulkanCopyPassCommandRecorder(device, *this, commandBuffer));
@@ -241,6 +261,16 @@ namespace RHI::Vulkan {
     void VulkanCopyPassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
         commandRecorder.ResourceBarrier(inBarrier);
+    }
+
+    void VulkanCopyPassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void VulkanCopyPassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
     }
 
     void VulkanCopyPassCommandRecorder::CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo)
@@ -306,6 +336,16 @@ namespace RHI::Vulkan {
     void VulkanComputePassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
         commandRecorder.ResourceBarrier(inBarrier);
+    }
+
+    void VulkanComputePassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void VulkanComputePassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
     }
 
     void VulkanComputePassCommandRecorder::SetPipeline(ComputePipeline* inPipeline)
@@ -406,6 +446,16 @@ namespace RHI::Vulkan {
     void VulkanRasterPassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
         commandRecorder.ResourceBarrier(inBarrier);
+    }
+
+    void VulkanRasterPassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void VulkanRasterPassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
     }
 
     void VulkanRasterPassCommandRecorder::SetPipeline(RasterPipeline* inPipeline)

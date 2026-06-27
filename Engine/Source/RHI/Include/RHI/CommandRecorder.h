@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
 
 #include <Common/Utility.h>
 #include <Common/Math/Rect.h>
@@ -199,6 +200,8 @@ namespace RHI {
     public:
         virtual ~CommonCommandRecorder();
         virtual void ResourceBarrier(const Barrier& barrier) = 0;
+        virtual void BeginMarker(const std::string& label) = 0;
+        virtual void EndMarker() = 0;
     };
 
     class CopyPassCommandRecorder : public CommonCommandRecorder {
@@ -270,7 +273,26 @@ namespace RHI {
     protected:
         CommandRecorder();
     };
+
+    class ScopedMarker {
+    public:
+        NonCopyable(ScopedMarker)
+        ScopedMarker(CommonCommandRecorder& inRecorder, const std::string& inLabel);
+        ~ScopedMarker();
+
+    private:
+        CommonCommandRecorder& recorder;
+    };
 }
+
+#define RHI_MARKER_CONCAT_IMPL(a, b) a##b
+#define RHI_MARKER_CONCAT(a, b) RHI_MARKER_CONCAT_IMPL(a, b)
+#if BUILD_CONFIG_DEBUG
+#define RHI_SCOPED_MARKER(recorder, label) \
+    RHI::ScopedMarker RHI_MARKER_CONCAT(rhiScopedMarker_, __COUNTER__) { recorder, label }
+#else
+#define RHI_SCOPED_MARKER(recorder, label) ((void) 0)
+#endif
 
 namespace RHI {
     template <typename Derived>

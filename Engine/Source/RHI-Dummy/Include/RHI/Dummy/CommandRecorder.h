@@ -16,6 +16,8 @@ namespace RHI::Dummy {
         ~DummyCommandRecorder() override;
 
         void ResourceBarrier(const Barrier& barrier) override;
+        void BeginMarker(const std::string& label) override;
+        void EndMarker() override;
         Common::UniquePtr<CopyPassCommandRecorder> BeginCopyPass() override;
         Common::UniquePtr<ComputePassCommandRecorder> BeginComputePass() override;
         Common::UniquePtr<RasterPassCommandRecorder> BeginRasterPass(const RasterPassBeginInfo& beginInfo) override;
@@ -33,6 +35,8 @@ namespace RHI::Dummy {
 
         // CommonCommandRecorder
         void ResourceBarrier(const RHI::Barrier& barrier) override;
+        void BeginMarker(const std::string& label) override;
+        void EndMarker() override;
 
         // CopyPassCommandRecorder
         void CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo) override;
@@ -50,6 +54,8 @@ namespace RHI::Dummy {
 
         // CommonCommandRecorder
         void ResourceBarrier(const RHI::Barrier& barrier) override;
+        void BeginMarker(const std::string& label) override;
+        void EndMarker() override;
 
         // ComputePassCommandRecorder
         void SetPipeline(ComputePipeline* pipeline) override;
@@ -66,6 +72,8 @@ namespace RHI::Dummy {
 
         // CommonCommandRecorder
         void ResourceBarrier(const RHI::Barrier& barrier) override;
+        void BeginMarker(const std::string& label) override;
+        void EndMarker() override;
 
         // RasterPassCommandRecorder
         void SetPipeline(RasterPipeline* pipeline) override;

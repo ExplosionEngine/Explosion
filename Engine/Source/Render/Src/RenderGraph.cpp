@@ -783,6 +783,7 @@ namespace Render {
 
     void RGBuilder::ExecuteCopyPass(RHI::CommandRecorder& inRecoder, RGCopyPass* inCopyPass)
     {
+        RHI_SCOPED_MARKER(inRecoder, inCopyPass->name);
         DevirtualizeResources(passWritesMap.at(inCopyPass));
         {
             TransitionResourcesForCopyPassDesc(inRecoder, inCopyPass->passDesc);
@@ -803,6 +804,7 @@ namespace Render {
 
     void RGBuilder::ExecuteComputePass(RHI::CommandRecorder& inRecoder, RGComputePass* inComputePass)
     {
+        RHI_SCOPED_MARKER(inRecoder, inComputePass->name);
         DevirtualizeResources(passWritesMap.at(inComputePass));
         DevirtualizeBindGroupsAndViews(inComputePass->bindGroups);
         {
@@ -825,6 +827,7 @@ namespace Render {
 
     void RGBuilder::ExecuteRasterPass(RHI::CommandRecorder& inRecoder, RGRasterPass* inRasterPass)
     {
+        RHI_SCOPED_MARKER(inRecoder, inRasterPass->name);
         DevirtualizeResources(passWritesMap.at(inRasterPass));
         DevirtualizeAttachmentViews(inRasterPass->passDesc);
         DevirtualizeBindGroupsAndViews(inRasterPass->bindGroups);

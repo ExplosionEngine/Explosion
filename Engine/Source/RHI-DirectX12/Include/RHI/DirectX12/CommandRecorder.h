@@ -20,6 +20,8 @@ namespace RHI::DirectX12 {
         ~DX12CommandRecorder() override;
 
         void ResourceBarrier(const Barrier& inBarrier) override;
+        void BeginMarker(const std::string& inLabel) override;
+        void EndMarker() override;
         Common::UniquePtr<CopyPassCommandRecorder> BeginCopyPass() override;
         Common::UniquePtr<ComputePassCommandRecorder> BeginComputePass() override;
         Common::UniquePtr<RasterPassCommandRecorder> BeginRasterPass(const RasterPassBeginInfo& inBeginInfo) override;
@@ -38,6 +40,8 @@ namespace RHI::DirectX12 {
 
         // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
+        void BeginMarker(const std::string& inLabel) override;
+        void EndMarker() override;
 
         // CopyPassCommandRecorder
         void CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo) override;
@@ -60,6 +64,8 @@ namespace RHI::DirectX12 {
 
         // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
+        void BeginMarker(const std::string& inLabel) override;
+        void EndMarker() override;
 
         // ComputePassCommandRecorder
         void SetPipeline(ComputePipeline* inPipeline) override;
@@ -82,6 +88,8 @@ namespace RHI::DirectX12 {
 
         // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
+        void BeginMarker(const std::string& inLabel) override;
+        void EndMarker() override;
 
         // RasterPassCommandRecorder
         void SetPipeline(RasterPipeline* inPipeline) override;
