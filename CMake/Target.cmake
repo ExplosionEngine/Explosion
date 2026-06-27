@@ -86,6 +86,95 @@ function(exp_gather_target_runtime_dependencies_recurse)
     set(${arg_OUT_DEP_TARGET} ${result_dep_target} PARENT_SCOPE)
 endfunction()
 
+# Every runtime file lands in the single shared per-sub-project Binaries directory. To keep the copies generator-agnostic
+# and race-free, each destination is owned by exactly one copy step rather than being re-copied by every consumer:
+#   - files referenced through a target ($<TARGET_FILE:...>) get a per-file owner created in the consumer's scope, so the
+#     generator expression resolves where the target is visible (imported third-party targets such as Qt are
+#     directory-scoped and would be invisible in a global aggregate target). A first-party owner additionally waits on its
+#     producing target; merging these into one target is impossible because a build tool such as MirrorTool consumes a dll
+#     while another dll's producer transitively depends on the tool, which would close a build cycle;
+#   - prebuilt third-party files given as plain paths, plus resources, carry no target and are batched (deduplicated) into
+#     one per-sub-project assets target whose copies run sequentially (see exp_finalize_dist_assets).
+function(exp_add_runtime_dep_copy)
+    set(options "")
+    set(singleValueArgs KEY SRC PRODUCER OUTPUT_TARGET)
+    set(multiValueArgs "")
+    cmake_parse_arguments(arg "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    string(MAKE_C_IDENTIFIER "${arg_KEY}" key_id)
+    set(registry_property EXP_RUNTIME_DEP_COPY_${SUB_PROJECT_NAME}_${key_id})
+
+    get_property(copy_target GLOBAL PROPERTY ${registry_property})
+    if (NOT copy_target)
+        exp_get_runtime_output_dir(OUTPUT out_dir)
+        set(copy_target ${SUB_PROJECT_NAME}.CopyDll.${key_id})
+        add_custom_target(
+            ${copy_target}
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${out_dir}
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${arg_SRC} ${out_dir}
+        )
+        set_target_properties(${copy_target} PROPERTIES FOLDER ${AUX_TARGETS_FOLDER})
+        if (arg_PRODUCER)
+            add_dependencies(${copy_target} ${arg_PRODUCER})
+        endif ()
+        set_property(GLOBAL PROPERTY ${registry_property} ${copy_target})
+    endif ()
+
+    set(${arg_OUTPUT_TARGET} ${copy_target} PARENT_SCOPE)
+endfunction()
+
+function(exp_schedule_dist_assets_finalize)
+    get_property(scheduled GLOBAL PROPERTY EXP_DIST_ASSETS_SCHEDULED_${SUB_PROJECT_NAME})
+    if (NOT scheduled)
+        set_property(GLOBAL PROPERTY EXP_DIST_ASSETS_SCHEDULED_${SUB_PROJECT_NAME} TRUE)
+        cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR} CALL exp_finalize_dist_assets "${SUB_PROJECT_NAME}")
+    endif ()
+endfunction()
+
+function(exp_finalize_dist_assets sub_project)
+    get_property(asset_files GLOBAL PROPERTY EXP_DIST_ASSET_FILES_${sub_project})
+    get_property(asset_resources GLOBAL PROPERTY EXP_DIST_ASSET_RESOURCES_${sub_project})
+    get_property(consumers GLOBAL PROPERTY EXP_DIST_ASSET_CONSUMERS_${sub_project})
+
+    if (NOT asset_files AND NOT asset_resources)
+        return()
+    endif ()
+
+    if (with_multi_config_generator)
+        set(out_dir ${CMAKE_BINARY_DIR}/Dist/$<CONFIG>/${sub_project}/Binaries)
+    else ()
+        set(out_dir ${CMAKE_BINARY_DIR}/Dist/${sub_project}/Binaries)
+    endif ()
+
+    set(copy_commands COMMAND ${CMAKE_COMMAND} -E make_directory ${out_dir})
+    if (asset_files)
+        list(REMOVE_DUPLICATES asset_files)
+        foreach (f ${asset_files})
+            list(APPEND copy_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${f} ${out_dir})
+        endforeach ()
+    endif ()
+    if (asset_resources)
+        list(REMOVE_DUPLICATES asset_resources)
+        foreach (entry ${asset_resources})
+            string(REPLACE "->" ";" pair "${entry}")
+            list(GET pair 0 src)
+            list(GET pair 1 dst)
+            list(APPEND copy_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${src} ${out_dir}/${dst})
+        endforeach ()
+    endif ()
+
+    set(copy_target ${sub_project}.CopyDistAssets)
+    add_custom_target(${copy_target} ${copy_commands})
+    set_target_properties(${copy_target} PROPERTIES FOLDER ${sub_project}/Aux)
+
+    if (consumers)
+        list(REMOVE_DUPLICATES consumers)
+        foreach (consumer ${consumers})
+            add_dependencies(${consumer} ${copy_target})
+        endforeach ()
+    endif ()
+endfunction()
+
 function(exp_process_runtime_dependencies)
     set(options NOT_INSTALL)
     set(singleValueArgs NAME)
@@ -105,28 +194,41 @@ function(exp_process_runtime_dependencies)
             OUT_DEP_TARGET dep_dep_targets
         )
         list(APPEND runtime_deps ${dep_target_runtime_deps})
-        list(APPEND dep_targets ${dep_dep_targets})
     endforeach ()
 
-    set(copy_commands COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${arg_NAME}>)
-    foreach(r ${runtime_deps})
-        list(APPEND copy_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${r} $<TARGET_FILE_DIR:${arg_NAME}>)
-    endforeach()
-    if (NOT "${copy_commands}" STREQUAL "")
-        set(custom_target_name ${arg_NAME}.CopyRuntimeDeps)
-        add_custom_target(
-            ${custom_target_name}
-            ${copy_commands}
-        )
-
-        add_dependencies(${arg_NAME} ${custom_target_name})
-        foreach (t ${dep_targets})
-            add_dependencies(${custom_target_name} ${t})
-        endforeach ()
-
-        set_target_properties(${custom_target_name} PROPERTIES FOLDER ${AUX_TARGETS_FOLDER})
+    if (runtime_deps)
+        list(REMOVE_DUPLICATES runtime_deps)
     endif ()
-    if (NOT arg_NOT_INSTALL AND NOT "${runtime_deps}" STREQUAL "")
+
+    foreach (r ${runtime_deps})
+        set(referenced "")
+        if ("${r}" MATCHES "^\\$<TARGET_FILE:(.+)>$")
+            set(referenced ${CMAKE_MATCH_1})
+        endif ()
+
+        if (referenced AND TARGET ${referenced})
+            set(producer "")
+            get_target_property(referenced_imported ${referenced} IMPORTED)
+            if (NOT referenced_imported)
+                set(producer ${referenced})
+            endif ()
+
+            exp_add_runtime_dep_copy(
+                KEY ${r}
+                SRC ${r}
+                PRODUCER ${producer}
+                OUTPUT_TARGET copy_target
+            )
+            add_dependencies(${arg_NAME} ${copy_target})
+        else ()
+            set_property(GLOBAL APPEND PROPERTY EXP_DIST_ASSET_FILES_${SUB_PROJECT_NAME} ${r})
+        endif ()
+    endforeach ()
+
+    set_property(GLOBAL APPEND PROPERTY EXP_DIST_ASSET_CONSUMERS_${SUB_PROJECT_NAME} ${arg_NAME})
+    exp_schedule_dist_assets_finalize()
+
+    if (NOT arg_NOT_INSTALL AND runtime_deps)
         install(
             FILES ${runtime_deps} DESTINATION ${SUB_PROJECT_NAME}/Binaries
         )
@@ -160,7 +262,7 @@ function(exp_add_resources_copy_command)
             OUTPUT_DST dst
         )
 
-        list(APPEND copy_commands COMMAND ${CMAKE_COMMAND} -E copy_if_different ${src} $<TARGET_FILE_DIR:${arg_NAME}>/${dst})
+        set_property(GLOBAL APPEND PROPERTY EXP_DIST_ASSET_RESOURCES_${SUB_PROJECT_NAME} "${src}->${dst}")
 
         cmake_path(SET dst_path NORMALIZE "${SUB_PROJECT_NAME}/Binaries/${dst}")
         cmake_path(GET dst_path PARENT_PATH dst_dir)
@@ -169,13 +271,8 @@ function(exp_add_resources_copy_command)
         endif ()
     endforeach()
 
-    set(copy_res_target_name ${arg_NAME}.CopyRes)
-    add_custom_target(
-        ${copy_res_target_name}
-        ${copy_commands}
-    )
-    set_target_properties(${copy_res_target_name} PROPERTIES FOLDER ${AUX_TARGETS_FOLDER})
-    add_dependencies(${arg_NAME} ${copy_res_target_name})
+    set_property(GLOBAL APPEND PROPERTY EXP_DIST_ASSET_CONSUMERS_${SUB_PROJECT_NAME} ${arg_NAME})
+    exp_schedule_dist_assets_finalize()
 endfunction()
 
 function(exp_gather_target_libs)
