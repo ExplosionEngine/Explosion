@@ -20,6 +20,8 @@ namespace RHI::DirectX12 {
         ~DX12Gpu() override;
 
         GpuProperty GetProperty() override;
+        FeatureFlags GetFeatures() override;
+        GpuLimits GetLimits() override;
         Common::UniquePtr<Device> RequestDevice(const DeviceCreateInfo& inCreateInfo) override;
         DX12Instance& GetInstance() const override;
 

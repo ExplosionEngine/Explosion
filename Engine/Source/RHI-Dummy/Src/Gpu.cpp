@@ -18,6 +18,16 @@ namespace RHI::Dummy {
         return {};
     }
 
+    FeatureFlags DummyGpu::GetFeatures()
+    {
+        return FeatureFlags::null;
+    }
+
+    GpuLimits DummyGpu::GetLimits()
+    {
+        return {};
+    }
+
     Common::UniquePtr<Device> DummyGpu::RequestDevice(const DeviceCreateInfo& createInfo)
     {
         return { new DummyDevice(*this, createInfo) };

@@ -17,6 +17,8 @@ namespace RHI::Vulkan {
         ~VulkanGpu() override;
 
         GpuProperty GetProperty() override;
+        FeatureFlags GetFeatures() override;
+        GpuLimits GetLimits() override;
         Common::UniquePtr<Device> RequestDevice(const DeviceCreateInfo& inCreateInfo) override;
         VulkanInstance& GetInstance() const override;
 
