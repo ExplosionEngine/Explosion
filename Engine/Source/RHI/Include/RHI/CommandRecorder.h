@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
 
 #include <Common/Utility.h>
 #include <Common/Math/Rect.h>
@@ -90,6 +91,21 @@ namespace RHI {
         BufferTextureCopyInfo& SetTextureSubResource(const TextureSubResourceInfo& inTextureSubResource);
         BufferTextureCopyInfo& SetTextureOrigin(const Common::UVec3& inTextureOrigin);
         BufferTextureCopyInfo& SetCopyRegion(const Common::UVec3& inCopyRegion);
+    };
+
+    struct DrawIndirectArguments {
+        uint32_t vertexCount = 0;
+        uint32_t instanceCount = 0;
+        uint32_t firstVertex = 0;
+        uint32_t firstInstance = 0;
+    };
+
+    struct DrawIndexedIndirectArguments {
+        uint32_t indexCount = 0;
+        uint32_t instanceCount = 0;
+        uint32_t firstIndex = 0;
+        int32_t baseVertex = 0;
+        uint32_t firstInstance = 0;
     };
 
     template <typename Derived>
@@ -184,6 +200,8 @@ namespace RHI {
     public:
         virtual ~CommonCommandRecorder();
         virtual void ResourceBarrier(const Barrier& barrier) = 0;
+        virtual void BeginMarker(const std::string& label) = 0;
+        virtual void EndMarker() = 0;
     };
 
     class CopyPassCommandRecorder : public CommonCommandRecorder {
@@ -232,9 +250,10 @@ namespace RHI {
         virtual void SetPrimitiveTopology(PrimitiveTopology primitiveTopology) = 0;
         virtual void SetBlendConstant(const float*/*[4]*/ constants) = 0;
         virtual void SetStencilReference(uint32_t reference) = 0;
-        // TODO DrawIndirect(...)
-        // TODO DrawIndexedIndirect(...)
-        // TODO MultiIndirectDraw(...)
+        virtual void DrawIndirect(Buffer* indirectBuffer, size_t offset) = 0;
+        virtual void DrawIndexedIndirect(Buffer* indirectBuffer, size_t offset) = 0;
+        virtual void MultiDrawIndirect(Buffer* indirectBuffer, size_t offset, size_t drawCount) = 0;
+        virtual void MultiDrawIndexedIndirect(Buffer* indirectBuffer, size_t offset, size_t drawCount) = 0;
         virtual void EndPass() = 0;
 
     protected:
@@ -254,7 +273,26 @@ namespace RHI {
     protected:
         CommandRecorder();
     };
+
+    class ScopedMarker {
+    public:
+        NonCopyable(ScopedMarker)
+        ScopedMarker(CommonCommandRecorder& inRecorder, const std::string& inLabel);
+        ~ScopedMarker();
+
+    private:
+        CommonCommandRecorder& recorder;
+    };
 }
+
+#define RHI_MARKER_CONCAT_IMPL(a, b) a##b
+#define RHI_MARKER_CONCAT(a, b) RHI_MARKER_CONCAT_IMPL(a, b)
+#if BUILD_CONFIG_DEBUG
+#define RHI_SCOPED_MARKER(recorder, label) \
+    RHI::ScopedMarker RHI_MARKER_CONCAT(rhiScopedMarker_, __COUNTER__) { recorder, label }
+#else
+#define RHI_SCOPED_MARKER(recorder, label) ((void) 0)
+#endif
 
 namespace RHI {
     template <typename Derived>

@@ -170,13 +170,19 @@ namespace RHI::Vulkan {
     TextureSubResourceCopyFootprint VulkanDevice::GetTextureSubResourceCopyFootprint(const Texture& texture, const TextureSubResourceInfo& subResourceInfo)
     {
         const auto& createInfo = texture.GetCreateInfo();
+        const auto mipLevel = subResourceInfo.mipLevel;
+        const auto baseDepth = createInfo.dimension == TextureDimension::t3D ? createInfo.depthOrArraySize : 1;
 
         TextureSubResourceCopyFootprint result {};
-        result.extent = { createInfo.width, createInfo.height, createInfo.dimension == TextureDimension::t3D ? createInfo.depthOrArraySize : 1 };
+        result.extent = {
+            std::max(createInfo.width >> mipLevel, 1u),
+            std::max(createInfo.height >> mipLevel, 1u),
+            std::max(baseDepth >> mipLevel, 1u)
+        };
         result.bytesPerPixel = GetBytesPerPixel(createInfo.format);
         result.rowPitch = result.bytesPerPixel * result.extent.x;
         result.slicePitch = result.rowPitch * result.extent.y;
-        result.totalBytes = result.bytesPerPixel * result.extent.x * result.extent.y * result.extent.z;
+        result.totalBytes = result.slicePitch * result.extent.z;
         return result;
     }
 

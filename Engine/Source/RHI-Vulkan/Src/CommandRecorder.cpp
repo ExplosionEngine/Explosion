@@ -27,7 +27,8 @@ namespace RHI::Vulkan {
             { BufferState::copyDst, VK_ACCESS_TRANSFER_WRITE_BIT },
             { BufferState::shaderReadOnly, VK_ACCESS_SHADER_READ_BIT },
             { BufferState::storage, VK_ACCESS_SHADER_READ_BIT },
-            { BufferState::rwStorage, VK_ACCESS_SHADER_WRITE_BIT }
+            { BufferState::rwStorage, VK_ACCESS_SHADER_WRITE_BIT },
+            { BufferState::indirect, VK_ACCESS_INDIRECT_COMMAND_READ_BIT }
         };
         return map.at(inState);
     }
@@ -41,8 +42,8 @@ namespace RHI::Vulkan {
             { BufferState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
             { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
             { BufferState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
-            { BufferState::rwStorage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
-
+            { BufferState::rwStorage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { BufferState::indirect, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT }
         };
         return map.at(inState);
     }
@@ -56,7 +57,8 @@ namespace RHI::Vulkan {
             { BufferState::copyDst, VK_PIPELINE_STAGE_TRANSFER_BIT },
             { BufferState::shaderReadOnly, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
             { BufferState::storage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
-            { BufferState::rwStorage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT }
+            { BufferState::rwStorage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT },
+            { BufferState::indirect, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT }
         };
         return map.at(inState);
     }
@@ -137,16 +139,14 @@ namespace RHI::Vulkan {
 
     static VkBufferImageCopy GetNativeBufferImageCopy(Device& device, const Texture& texture, const BufferTextureCopyInfo& copyInfo)
     {
-        const auto aspectLayout = device.GetTextureSubResourceCopyFootprint(texture, copyInfo.textureSubResource); // NOLINT
-        const auto createInfo = texture.GetCreateInfo();
-
-        const auto linearRowPitch = GetBytesPerPixel(createInfo.format) * copyInfo.copyRegion.x;
-        const auto linearSlicePitch = linearRowPitch * copyInfo.copyRegion.y;
+        const auto footprint = device.GetTextureSubResourceCopyFootprint(texture, copyInfo.textureSubResource); // NOLINT
 
         VkBufferImageCopy result {};
         result.bufferOffset = copyInfo.bufferOffset;
-        result.bufferRowLength = aspectLayout.rowPitch == linearRowPitch ? 0 : aspectLayout.rowPitch;
-        result.bufferImageHeight = aspectLayout.slicePitch == linearSlicePitch ? 0 : aspectLayout.slicePitch;
+        // bufferRowLength/bufferImageHeight are measured in texels and describe how the linear buffer data is strided;
+        // they mirror the full sub-resource footprint, while imageExtent selects the copied window within it.
+        result.bufferRowLength = static_cast<uint32_t>(footprint.rowPitch / footprint.bytesPerPixel);
+        result.bufferImageHeight = footprint.extent.y;
         result.imageOffset = { static_cast<int32_t>(copyInfo.textureOrigin.x), static_cast<int32_t>(copyInfo.textureOrigin.y), static_cast<int32_t>(copyInfo.textureOrigin.z) };
         result.imageExtent = { copyInfo.copyRegion.x, copyInfo.copyRegion.y, copyInfo.copyRegion.z };
         result.imageSubresource = GetNativeImageSubResourceLayers(copyInfo.textureSubResource);
@@ -209,6 +209,26 @@ namespace RHI::Vulkan {
         }
     }
 
+    void VulkanCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+#if BUILD_CONFIG_DEBUG
+        VkDebugUtilsLabelEXT labelInfo = { VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT };
+        labelInfo.pLabelName = inLabel.c_str();
+        labelInfo.color[0] = labelInfo.color[1] = labelInfo.color[2] = labelInfo.color[3] = 1.0f;
+
+        auto* pfn = device.GetGpu().GetInstance().FindOrGetTypedDynamicFuncPointer<PFN_vkCmdBeginDebugUtilsLabelEXT>("vkCmdBeginDebugUtilsLabelEXT");
+        pfn(commandBuffer.GetNative(), &labelInfo);
+#endif
+    }
+
+    void VulkanCommandRecorder::EndMarker()
+    {
+#if BUILD_CONFIG_DEBUG
+        auto* pfn = device.GetGpu().GetInstance().FindOrGetTypedDynamicFuncPointer<PFN_vkCmdEndDebugUtilsLabelEXT>("vkCmdEndDebugUtilsLabelEXT");
+        pfn(commandBuffer.GetNative());
+#endif
+    }
+
     Common::UniquePtr<CopyPassCommandRecorder> VulkanCommandRecorder::BeginCopyPass()
     {
         return Common::UniquePtr<CopyPassCommandRecorder>(new VulkanCopyPassCommandRecorder(device, *this, commandBuffer));
@@ -241,6 +261,16 @@ namespace RHI::Vulkan {
     void VulkanCopyPassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
         commandRecorder.ResourceBarrier(inBarrier);
+    }
+
+    void VulkanCopyPassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void VulkanCopyPassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
     }
 
     void VulkanCopyPassCommandRecorder::CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo)
@@ -306,6 +336,16 @@ namespace RHI::Vulkan {
     void VulkanComputePassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
         commandRecorder.ResourceBarrier(inBarrier);
+    }
+
+    void VulkanComputePassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void VulkanComputePassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
     }
 
     void VulkanComputePassCommandRecorder::SetPipeline(ComputePipeline* inPipeline)
@@ -408,6 +448,16 @@ namespace RHI::Vulkan {
         commandRecorder.ResourceBarrier(inBarrier);
     }
 
+    void VulkanRasterPassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void VulkanRasterPassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
+    }
+
     void VulkanRasterPassCommandRecorder::SetPipeline(RasterPipeline* inPipeline)
     {
         rasterPipeline = static_cast<VulkanRasterPipeline*>(inPipeline);
@@ -494,6 +544,28 @@ namespace RHI::Vulkan {
     {
         // TODO stencil face;
         vkCmdSetStencilReference(commandBuffer.GetNative(), VK_STENCIL_FACE_FRONT_AND_BACK, inReference);
+    }
+
+    void VulkanRasterPassCommandRecorder::DrawIndirect(Buffer* inIndirectBuffer, const size_t inOffset)
+    {
+        MultiDrawIndirect(inIndirectBuffer, inOffset, 1);
+    }
+
+    void VulkanRasterPassCommandRecorder::DrawIndexedIndirect(Buffer* inIndirectBuffer, const size_t inOffset)
+    {
+        MultiDrawIndexedIndirect(inIndirectBuffer, inOffset, 1);
+    }
+
+    void VulkanRasterPassCommandRecorder::MultiDrawIndirect(Buffer* inIndirectBuffer, const size_t inOffset, const size_t inDrawCount)
+    {
+        const auto* indirectBuffer = static_cast<VulkanBuffer*>(inIndirectBuffer);
+        vkCmdDrawIndirect(commandBuffer.GetNative(), indirectBuffer->GetNative(), inOffset, inDrawCount, sizeof(DrawIndirectArguments));
+    }
+
+    void VulkanRasterPassCommandRecorder::MultiDrawIndexedIndirect(Buffer* inIndirectBuffer, const size_t inOffset, const size_t inDrawCount)
+    {
+        const auto* indirectBuffer = static_cast<VulkanBuffer*>(inIndirectBuffer);
+        vkCmdDrawIndexedIndirect(commandBuffer.GetNative(), indirectBuffer->GetNative(), inOffset, inDrawCount, sizeof(DrawIndexedIndirectArguments));
     }
 
     void VulkanRasterPassCommandRecorder::EndPass()

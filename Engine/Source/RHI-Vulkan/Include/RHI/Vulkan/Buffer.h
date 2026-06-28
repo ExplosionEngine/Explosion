@@ -34,5 +34,8 @@ namespace RHI::Vulkan {
         VkBuffer nativeBuffer;
         VmaAllocation nativeAllocation;
         BufferUsageFlags usages;
+        MapMode mapMode;
+        size_t mapOffset;
+        size_t mapLength;
     };
 }

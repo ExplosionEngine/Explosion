@@ -184,6 +184,7 @@ namespace Runtime {
     void Texture::UpdateMips()
     {
         const auto arraySize = type == TextureType::t3D ? 1 : depthOrArraySize;
+        const auto depth = type == TextureType::t3D ? depthOrArraySize : 1;
         const auto bytesPerPixel = RHI::GetBytesPerPixel(static_cast<RHI::PixelFormat>(format));
 
         subResourcePixelsData.clear();
@@ -192,9 +193,10 @@ namespace Runtime {
         for (auto m = 0; m < mipLevels; m++) {
             const auto mipWidth = std::max(width >> m, 1u);
             const auto mipHeight = std::max(height >> m, 1u);
+            const auto mipDepth = std::max(depth >> m, 1u);
 
             for (auto a = 0; a < arraySize; a++) {
-                subResourcePixelsData[Internal::GetSubResourceIndex(m, a, arraySize)].resize(mipWidth * mipHeight * bytesPerPixel);
+                subResourcePixelsData[Internal::GetSubResourceIndex(m, a, arraySize)].resize(mipWidth * mipHeight * mipDepth * bytesPerPixel);
             }
         }
     }
@@ -230,8 +232,6 @@ namespace Runtime {
             texturePtr = texture.Get(),
             type = type,
             format = format,
-            width = width,
-            height = height,
             depthOrArraySize = depthOrArraySize,
             mipLevels = mipLevels,
             aspect = Internal::GetTextureAspect(format),
@@ -239,7 +239,6 @@ namespace Runtime {
             name = name
         ]() -> void {
             const auto arraySize = type == TextureType::t3D ? 1 : depthOrArraySize;
-            const auto depth = type == TextureType::t3D ? depthOrArraySize : 1;
 
             std::vector<RHI::TextureSubResourceCopyFootprint> copyFootprints;
             copyFootprints.reserve(mipLevels * arraySize);
@@ -261,8 +260,7 @@ namespace Runtime {
                     .SetInitialState(RHI::BufferState::staging)
                     .SetDebugName(std::format("StagingBuffer-{}", name)));
 
-            const auto srcRowPitch = width * RHI::GetBytesPerPixel(static_cast<RHI::PixelFormat>(format));
-            const auto srcSlicePitch = width * height * RHI::GetBytesPerPixel(static_cast<RHI::PixelFormat>(format));
+            const auto bytesPerPixel = RHI::GetBytesPerPixel(static_cast<RHI::PixelFormat>(format));
 
             size_t dstSubResourceOffset = 0;
             auto* dstData = static_cast<uint8_t*>(stagingBuffer->Map(RHI::MapMode::write, 0, totalBytes));
@@ -272,8 +270,10 @@ namespace Runtime {
                     const auto& srcPixels = subResourcePixelsData[subResourceIndex];
                     const auto& dstCopyFootprint = copyFootprints[subResourceIndex];
 
-                    for (auto z = 0; z < depthOrArraySize; z++) {
-                        for (auto y = 0; y < height; y++) {
+                    const auto srcRowPitch = dstCopyFootprint.extent.x * bytesPerPixel;
+                    const auto srcSlicePitch = srcRowPitch * dstCopyFootprint.extent.y;
+                    for (auto z = 0u; z < dstCopyFootprint.extent.z; z++) {
+                        for (auto y = 0u; y < dstCopyFootprint.extent.y; y++) {
                             const auto* src = srcPixels.data() + srcSlicePitch * z + srcRowPitch * y;
                             auto* dst = dstData + dstSubResourceOffset + dstCopyFootprint.slicePitch * z + dstCopyFootprint.rowPitch * y;
                             memcpy(dst, src, srcRowPitch);
@@ -300,7 +300,7 @@ namespace Runtime {
                                     .SetBufferOffset(dstSubResourceOffset)
                                     .SetTextureSubResource(RHI::TextureSubResourceInfo(m, a, aspect))
                                     .SetTextureOrigin({ 0, 0, 0 })
-                                    .SetCopyRegion({ width, height, depth }));
+                                    .SetCopyRegion(copyFootprints[subResourceIndex].extent));
                             dstSubResourceOffset += copyFootprints[subResourceIndex].totalBytes;
                         }
                     }

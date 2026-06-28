@@ -48,12 +48,14 @@ namespace RHI::DirectX12 {
     {
         const auto aspectLayout = device.GetTextureSubResourceCopyFootprint(texture, copyInfo.textureSubResource); // NOLINT
 
+        // The buffer is laid out as the full sub-resource footprint (so the slice stride is RowPitch * full height);
+        // the copied window is selected by the box passed to CopyTextureRegion, not by shrinking this footprint.
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT bufferLayout;
         bufferLayout.Offset = copyInfo.bufferOffset;
         bufferLayout.Footprint.Format = texture.GetNative()->GetDesc().Format;
-        bufferLayout.Footprint.Width = copyInfo.copyRegion.x;
-        bufferLayout.Footprint.Height = copyInfo.copyRegion.y;
-        bufferLayout.Footprint.Depth = copyInfo.copyRegion.z;
+        bufferLayout.Footprint.Width = aspectLayout.extent.x;
+        bufferLayout.Footprint.Height = aspectLayout.extent.y;
+        bufferLayout.Footprint.Depth = aspectLayout.extent.z;
         bufferLayout.Footprint.RowPitch = aspectLayout.rowPitch;
         return { buffer.GetNative(), bufferLayout };
     }
@@ -71,6 +73,12 @@ namespace RHI::DirectX12 {
     }
 }
 
+namespace RHI::DirectX12::Internal {
+    // PIX_EVENT_ANSI_VERSION: marks the BeginEvent payload as a plain ANSI string, decoded by RenderDoc/PIX without the
+    // WinPixEventRuntime dependency.
+    constexpr UINT pixEventAnsiVersion = 1;
+}
+
 namespace RHI::DirectX12 {
     DX12CopyPassCommandRecorder::DX12CopyPassCommandRecorder(DX12Device& inDevice, DX12CommandRecorder& inCmdRecorder, DX12CommandBuffer& inCmdBuffer)
         : device(inDevice)
@@ -84,6 +92,16 @@ namespace RHI::DirectX12 {
     void DX12CopyPassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
         commandRecorder.ResourceBarrier(inBarrier);
+    }
+
+    void DX12CopyPassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void DX12CopyPassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
     }
 
     void DX12CopyPassCommandRecorder::CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo)
@@ -166,6 +184,16 @@ namespace RHI::DirectX12 {
     void DX12ComputePassCommandRecorder::ResourceBarrier(const Barrier& inBarrier)
     {
         commandRecorder.ResourceBarrier(inBarrier);
+    }
+
+    void DX12ComputePassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void DX12ComputePassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
     }
 
     void DX12ComputePassCommandRecorder::SetPipeline(ComputePipeline* inPipeline)
@@ -251,6 +279,16 @@ namespace RHI::DirectX12 {
         commandRecorder.ResourceBarrier(inBarrier);
     }
 
+    void DX12RasterPassCommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+        commandRecorder.BeginMarker(inLabel);
+    }
+
+    void DX12RasterPassCommandRecorder::EndMarker()
+    {
+        commandRecorder.EndMarker();
+    }
+
     void DX12RasterPassCommandRecorder::SetPipeline(RasterPipeline* inPipeline)
     {
         rasterPipeline = static_cast<DX12RasterPipeline*>(inPipeline);
@@ -329,6 +367,28 @@ namespace RHI::DirectX12 {
         commandBuffer.GetNativeCmdList()->OMSetStencilRef(inReference);
     }
 
+    void DX12RasterPassCommandRecorder::DrawIndirect(Buffer* inIndirectBuffer, const size_t inOffset)
+    {
+        MultiDrawIndirect(inIndirectBuffer, inOffset, 1);
+    }
+
+    void DX12RasterPassCommandRecorder::DrawIndexedIndirect(Buffer* inIndirectBuffer, const size_t inOffset)
+    {
+        MultiDrawIndexedIndirect(inIndirectBuffer, inOffset, 1);
+    }
+
+    void DX12RasterPassCommandRecorder::MultiDrawIndirect(Buffer* inIndirectBuffer, const size_t inOffset, const size_t inDrawCount)
+    {
+        const auto* indirectBuffer = static_cast<DX12Buffer*>(inIndirectBuffer);
+        commandBuffer.GetNativeCmdList()->ExecuteIndirect(device.GetDrawIndirectCommandSignature(), inDrawCount, indirectBuffer->GetNative(), inOffset, nullptr, 0);
+    }
+
+    void DX12RasterPassCommandRecorder::MultiDrawIndexedIndirect(Buffer* inIndirectBuffer, const size_t inOffset, const size_t inDrawCount)
+    {
+        const auto* indirectBuffer = static_cast<DX12Buffer*>(inIndirectBuffer);
+        commandBuffer.GetNativeCmdList()->ExecuteIndirect(device.GetDrawIndexedIndirectCommandSignature(), inDrawCount, indirectBuffer->GetNative(), inOffset, nullptr, 0);
+    }
+
     void DX12RasterPassCommandRecorder::EndPass()
     {
     }
@@ -381,6 +441,20 @@ namespace RHI::DirectX12 {
 
         const CD3DX12_RESOURCE_BARRIER resourceBarrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, beforeState, afterState);
         commandBuffer.GetNativeCmdList()->ResourceBarrier(1, &resourceBarrier);
+    }
+
+    void DX12CommandRecorder::BeginMarker(const std::string& inLabel)
+    {
+#if BUILD_CONFIG_DEBUG
+        commandBuffer.GetNativeCmdList()->BeginEvent(Internal::pixEventAnsiVersion, inLabel.c_str(), static_cast<UINT>(inLabel.size() + 1));
+#endif
+    }
+
+    void DX12CommandRecorder::EndMarker()
+    {
+#if BUILD_CONFIG_DEBUG
+        commandBuffer.GetNativeCmdList()->EndEvent();
+#endif
     }
 
     Common::UniquePtr<CopyPassCommandRecorder> DX12CommandRecorder::BeginCopyPass()

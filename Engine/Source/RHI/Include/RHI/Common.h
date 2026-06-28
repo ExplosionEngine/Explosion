@@ -392,6 +392,7 @@ namespace RHI {
         shaderReadOnly,
         storage,
         rwStorage,
+        indirect,
         max
     };
 
@@ -462,6 +463,17 @@ namespace RHI {
     };
     using ColorWriteFlags = Common::Flags<ColorWriteBits>;
     DECLARE_FLAG_BITS_OP(ColorWriteFlags, ColorWriteBits)
+
+    enum class FeatureBits : uint32_t {
+        samplerAnisotropy         = 0x1,
+        textureCompressionBc      = 0x2,
+        timestampQuery            = 0x4,
+        multiDrawIndirect         = 0x8,
+        drawIndirectFirstInstance = 0x10,
+        max                       = 0x20
+    };
+    using FeatureFlags = Common::Flags<FeatureBits>;
+    DECLARE_FLAG_BITS_OP(FeatureFlags, FeatureBits)
 }
 
 namespace RHI {

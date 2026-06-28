@@ -14,6 +14,8 @@ namespace RHI::Dummy {
         explicit DummyGpu(DummyInstance& inInstance);
         ~DummyGpu() override;
         GpuProperty GetProperty() override;
+        FeatureFlags GetFeatures() override;
+        GpuLimits GetLimits() override;
         Common::UniquePtr<Device> RequestDevice(const DeviceCreateInfo& createInfo) override;
         DummyInstance& GetInstance() const override;
 

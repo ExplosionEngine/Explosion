@@ -80,7 +80,7 @@ namespace RHI::DirectX12 {
         void* data;
         const CD3DX12_RANGE range(inOffset, inOffset + inLength);
         Assert(SUCCEEDED(nativeResource->Map(0, &range, &data)));
-        return data;
+        return static_cast<uint8_t*>(data) + inOffset;
     }
 
     void DX12Buffer::Unmap()

@@ -38,6 +38,12 @@ class DXCConan(ConanFile):
 
     def generate(self):
         cmake_toolchain = CMakeToolchain(self, generator="Ninja")
+        # DXC's StringRef.h specializes std::is_nothrow_constructible (an upstream "HLSL Change"). Newer Clang flags
+        # specializing a standard library entity as -Winvalid-specialization, which is an error by default, so recent
+        # Apple Clang fails to build the pinned source. Suppress the diagnostic (the specialization still takes effect,
+        # preserving upstream behavior); -Wno-unknown-warning-option keeps older Clang that lacks the flag happy.
+        if str(self.settings.compiler) in ("clang", "apple-clang"):
+            cmake_toolchain.extra_cxxflags.extend(["-Wno-unknown-warning-option", "-Wno-invalid-specialization"])
         cmake_toolchain.generate()
 
         deps = CMakeDeps(self)

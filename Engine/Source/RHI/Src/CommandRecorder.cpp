@@ -207,4 +207,15 @@ namespace RHI {
     RasterPassCommandRecorder::RasterPassCommandRecorder() = default;
 
     RasterPassCommandRecorder::~RasterPassCommandRecorder() = default;
+
+    ScopedMarker::ScopedMarker(CommonCommandRecorder& inRecorder, const std::string& inLabel)
+        : recorder(inRecorder)
+    {
+        recorder.BeginMarker(inLabel);
+    }
+
+    ScopedMarker::~ScopedMarker()
+    {
+        recorder.EndMarker();
+    }
 }

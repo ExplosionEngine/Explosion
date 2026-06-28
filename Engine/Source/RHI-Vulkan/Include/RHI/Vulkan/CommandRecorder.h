@@ -22,6 +22,8 @@ namespace RHI::Vulkan {
         ~VulkanCommandRecorder() override;
 
         void ResourceBarrier(const Barrier& inBarrier) override;
+        void BeginMarker(const std::string& inLabel) override;
+        void EndMarker() override;
         Common::UniquePtr<CopyPassCommandRecorder> BeginCopyPass() override;
         Common::UniquePtr<ComputePassCommandRecorder> BeginComputePass() override;
         Common::UniquePtr<RasterPassCommandRecorder> BeginRasterPass(const RasterPassBeginInfo& inBeginInfo) override;
@@ -40,6 +42,8 @@ namespace RHI::Vulkan {
 
         // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
+        void BeginMarker(const std::string& inLabel) override;
+        void EndMarker() override;
 
         // CopyPassCommandRecorder
         void CopyBufferToBuffer(Buffer* src, Buffer* dst, const BufferCopyInfo& copyInfo) override;
@@ -62,6 +66,8 @@ namespace RHI::Vulkan {
 
         // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
+        void BeginMarker(const std::string& inLabel) override;
+        void EndMarker() override;
 
         // ComputePassCommandRecorder
         void SetPipeline(ComputePipeline* inPipeline) override;
@@ -84,6 +90,8 @@ namespace RHI::Vulkan {
 
         // CommonCommandRecorder
         void ResourceBarrier(const Barrier& inBarrier) override;
+        void BeginMarker(const std::string& inLabel) override;
+        void EndMarker() override;
 
         // RasterPassCommandRecorder
         void SetPipeline(RasterPipeline* inPipeline) override;
@@ -97,6 +105,10 @@ namespace RHI::Vulkan {
         void SetPrimitiveTopology(PrimitiveTopology inPrimitiveTopology) override;
         void SetBlendConstant(const float* inConstants) override;
         void SetStencilReference(uint32_t inReference) override;
+        void DrawIndirect(Buffer* inIndirectBuffer, size_t inOffset) override;
+        void DrawIndexedIndirect(Buffer* inIndirectBuffer, size_t inOffset) override;
+        void MultiDrawIndirect(Buffer* inIndirectBuffer, size_t inOffset, size_t inDrawCount) override;
+        void MultiDrawIndexedIndirect(Buffer* inIndirectBuffer, size_t inOffset, size_t inDrawCount) override;
         void EndPass() override;
 
     private:
