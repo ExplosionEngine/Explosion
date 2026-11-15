@@ -9,14 +9,12 @@
 #include <imgui_stdlib.h>
 
 #include <Core/Log.h>
-#include <Core/Paths.h>
-#include <Editor/Panel/AssetsPanel.h>
-#include <Editor/Panel/EditorPanelNames.h>
+#include <Editor/Tab/AssetsTab.h>
 #include <Editor/Utils/PlatformUtils.h>
 #include <Editor/Widget/IconWidgets.h>
 #include <Editor/Widget/TablerIcons.h>
 
-namespace Editor::Internal {
+namespace Editor::Assets::Internal {
     constexpr float assetsFolderTreeWidth = 220.0f;
     constexpr const char* assetPathPayload = "EXPLOSION_ASSET_PATH";
 
@@ -51,8 +49,14 @@ namespace Editor::Internal {
 }
 
 namespace Editor {
-    AssetsPanel::AssetsPanel()
-        : fileSystem(Core::Paths::GameAssetDir().String())
+    AssetsTab::AssetsTab(Common::Path inAssetDirectory)
+        : EditorTab(EditorTabDesc {
+            .id = "Assets",
+            .title = "Assets",
+            .icon = Icons::Tabler::folder,
+            .defaultDockArea = TabDockArea::bottom
+        })
+        , fileSystem(inAssetDirectory.String())
         , currentDirectory(fileSystem.Root())
         , clipboardMode(ClipboardMode::none)
         , statusIsError(false)
@@ -62,16 +66,8 @@ namespace Editor {
     {
     }
 
-    AssetsPanel::~AssetsPanel() = default;
-
-    void AssetsPanel::Render(bool& inOutOpen)
+    void AssetsTab::RenderContents()
     {
-        static const std::string label = Widgets::Label(Icons::Tabler::folder, PanelNames::assets, PanelNames::assets);
-        if (!ImGui::Begin(label.c_str(), &inOutOpen)) {
-            ImGui::End();
-            return;
-        }
-
         std::error_code error;
         if (!std::filesystem::is_directory(currentDirectory, error) || !fileSystem.Contains(currentDirectory)) {
             NavigateTo(fileSystem.Root());
@@ -99,8 +95,8 @@ namespace Editor {
         }
         ImGui::Separator();
 
-        ImGui::BeginChild("AssetFolders", ImVec2(Internal::assetsFolderTreeWidth, 0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
-        RenderDirectoryTree(fileSystem.Root(), PanelNames::assets);
+        ImGui::BeginChild("AssetFolders", ImVec2(Assets::Internal::assetsFolderTreeWidth, 0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX);
+        RenderDirectoryTree(fileSystem.Root(), GetDesc().title.c_str());
         ImGui::EndChild();
         ImGui::SameLine();
         ImGui::BeginChild("AssetContents", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders);
@@ -108,10 +104,9 @@ namespace Editor {
         ImGui::EndChild();
 
         RenderModals();
-        ImGui::End();
     }
 
-    void AssetsPanel::RenderToolbar()
+    void AssetsTab::RenderToolbar()
     {
         const bool atRoot = currentDirectory == fileSystem.Root();
         ImGui::BeginDisabled(atRoot);
@@ -156,9 +151,9 @@ namespace Editor {
         ImGui::EndDisabled();
     }
 
-    void AssetsPanel::RenderBreadcrumbs()
+    void AssetsTab::RenderBreadcrumbs()
     {
-        if (Widgets::IconButton("Asset Root", Icons::Tabler::home, PanelNames::assets)) {
+        if (Widgets::IconButton("Asset Root", Icons::Tabler::home, GetDesc().title.c_str())) {
             NavigateTo(fileSystem.Root());
         }
 
@@ -182,7 +177,7 @@ namespace Editor {
         }
     }
 
-    void AssetsPanel::RenderDirectoryTree(const std::filesystem::path& inDirectory, const char* inLabel)
+    void AssetsTab::RenderDirectoryTree(const std::filesystem::path& inDirectory, const char* inLabel)
     {
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
         if (inDirectory == currentDirectory) {
@@ -216,7 +211,7 @@ namespace Editor {
         ImGui::PopID();
     }
 
-    void AssetsPanel::RenderDirectoryContents()
+    void AssetsTab::RenderDirectoryContents()
     {
         if (ImGui::BeginTable("AssetEntries", 3, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY)) {
             ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthStretch);
@@ -236,7 +231,7 @@ namespace Editor {
         RenderBackgroundMenu();
     }
 
-    void AssetsPanel::RenderEntry(const AssetFileEntry& inEntry)
+    void AssetsTab::RenderEntry(const AssetFileEntry& inEntry)
     {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
@@ -253,7 +248,7 @@ namespace Editor {
         }
 
         if (ImGui::BeginDragDropSource()) {
-            ImGui::SetDragDropPayload(Internal::assetPathPayload, pathId.c_str(), pathId.size() + 1);
+            ImGui::SetDragDropPayload(Assets::Internal::assetPathPayload, pathId.c_str(), pathId.size() + 1);
             ImGui::TextUnformatted(label.c_str());
             ImGui::EndDragDropSource();
         }
@@ -263,17 +258,17 @@ namespace Editor {
         RenderEntryContextMenu(inEntry, "AssetEntryMenu");
 
         ImGui::TableSetColumnIndex(1);
-        ImGui::TextUnformatted(Internal::EntryType(inEntry).c_str());
+        ImGui::TextUnformatted(Assets::Internal::EntryType(inEntry).c_str());
         ImGui::TableSetColumnIndex(2);
         if (inEntry.directory) {
             ImGui::TextDisabled("--");
         } else {
-            ImGui::TextUnformatted(Internal::FormatFileSize(inEntry.size).c_str());
+            ImGui::TextUnformatted(Assets::Internal::FormatFileSize(inEntry.size).c_str());
         }
         ImGui::PopID();
     }
 
-    void AssetsPanel::RenderEntryContextMenu(const AssetFileEntry& inEntry, const char* inPopupId)
+    void AssetsTab::RenderEntryContextMenu(const AssetFileEntry& inEntry, const char* inPopupId)
     {
         if (!ImGui::BeginPopupContextItem(inPopupId)) {
             return;
@@ -303,7 +298,7 @@ namespace Editor {
         ImGui::EndPopup();
     }
 
-    void AssetsPanel::RenderBackgroundMenu()
+    void AssetsTab::RenderBackgroundMenu()
     {
         if (!ImGui::BeginPopupContextWindow("AssetBackgroundMenu", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems)) {
             return;
@@ -324,7 +319,7 @@ namespace Editor {
         ImGui::EndPopup();
     }
 
-    void AssetsPanel::RenderModals()
+    void AssetsTab::RenderModals()
     {
         if (requestCreateFolderPopup) {
             ImGui::OpenPopup("Create Folder");
@@ -419,7 +414,7 @@ namespace Editor {
         }
     }
 
-    void AssetsPanel::HandleKeyboardShortcuts()
+    void AssetsTab::HandleKeyboardShortcuts()
     {
         if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) || ImGui::GetIO().WantTextInput) {
             return;
@@ -447,12 +442,12 @@ namespace Editor {
         }
     }
 
-    void AssetsPanel::HandleDropTarget(const std::filesystem::path& inDirectory)
+    void AssetsTab::HandleDropTarget(const std::filesystem::path& inDirectory)
     {
         if (!ImGui::BeginDragDropTarget()) {
             return;
         }
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(Internal::assetPathPayload)) {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(Assets::Internal::assetPathPayload)) {
             const auto* pathText = static_cast<const char*>(payload->Data);
             std::filesystem::path destination;
             std::string error;
@@ -469,7 +464,7 @@ namespace Editor {
         ImGui::EndDragDropTarget();
     }
 
-    void AssetsPanel::NavigateTo(const std::filesystem::path& inDirectory)
+    void AssetsTab::NavigateTo(const std::filesystem::path& inDirectory)
     {
         std::error_code error;
         if (!fileSystem.Contains(inDirectory) || !std::filesystem::is_directory(inDirectory, error)) {
@@ -483,13 +478,13 @@ namespace Editor {
         selectedPath.clear();
     }
 
-    void AssetsPanel::OpenCreateFolderPopup()
+    void AssetsTab::OpenCreateFolderPopup()
     {
         createFolderName = "New Folder";
         requestCreateFolderPopup = true;
     }
 
-    void AssetsPanel::OpenRenamePopup(const std::filesystem::path& inPath)
+    void AssetsTab::OpenRenamePopup(const std::filesystem::path& inPath)
     {
         if (inPath.empty()) {
             return;
@@ -499,7 +494,7 @@ namespace Editor {
         requestRenamePopup = true;
     }
 
-    void AssetsPanel::OpenDeletePopup(const std::filesystem::path& inPath)
+    void AssetsTab::OpenDeletePopup(const std::filesystem::path& inPath)
     {
         if (inPath.empty()) {
             return;
@@ -508,14 +503,14 @@ namespace Editor {
         requestDeletePopup = true;
     }
 
-    void AssetsPanel::SetClipboard(const std::filesystem::path& inPath, ClipboardMode inMode)
+    void AssetsTab::SetClipboard(const std::filesystem::path& inPath, ClipboardMode inMode)
     {
         clipboardPath = inPath;
         clipboardMode = inMode;
         ReportResult(std::format("{} '{}'", inMode == ClipboardMode::copy ? "Copied" : "Cut", inPath.filename().string()), false);
     }
 
-    void AssetsPanel::PasteInto(const std::filesystem::path& inDirectory)
+    void AssetsTab::PasteInto(const std::filesystem::path& inDirectory)
     {
         if (clipboardMode == ClipboardMode::none || clipboardPath.empty()) {
             return;
@@ -540,7 +535,7 @@ namespace Editor {
         }
     }
 
-    void AssetsPanel::ImportFiles()
+    void AssetsTab::ImportFiles()
     {
         const std::vector<std::string> files = PlatformUtils::SelectFiles("Import Assets", currentDirectory.string());
         size_t importedCount = 0;
@@ -559,7 +554,7 @@ namespace Editor {
         }
     }
 
-    void AssetsPanel::ReportResult(const std::string& inMessage, bool inError)
+    void AssetsTab::ReportResult(const std::string& inMessage, bool inError)
     {
         if (statusMessage == inMessage && statusIsError == inError) {
             return;

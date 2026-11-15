@@ -2,18 +2,16 @@
 // Created by johnk on 2026/7/7.
 //
 
-#include <algorithm>
 #include <format>
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
-#include <imgui_internal.h>
 
 #include <Common/Debug.h>
 #include <Common/Time.h>
 #include <Core/Paths.h>
 #include <Editor/EditorApplication.h>
-#include <Editor/Panel/EditorPanelNames.h>
+#include <Editor/EditorLog.h>
 #include <Editor/Theme/Theme.h>
 #include <Editor/Widget/TablerIcons.h>
 #include <Runtime/Engine.h>
@@ -24,20 +22,9 @@ namespace Editor::Internal {
     constexpr uint32_t projectHubWindowWidth = 560;
     constexpr uint32_t projectHubWindowHeight = 720;
     constexpr float defaultFontSize = 15.0f;
-    constexpr float defaultRightColumnRatio = 0.22f;
-    constexpr float minRightColumnWidth = 360.0f;
-    constexpr float maxRightColumnWidth = 480.0f;
-    constexpr float defaultBottomPanelRatio = 0.22f;
-    constexpr float minBottomPanelHeight = 200.0f;
-    constexpr float maxBottomPanelHeight = 300.0f;
-    constexpr float defaultOutlinerRatio = 0.35f;
-    constexpr float minOutlinerHeight = 280.0f;
-    constexpr float maxOutlinerHeight = 420.0f;
     constexpr uint32_t defaultSceneWidth = 1280;
     constexpr uint32_t defaultSceneHeight = 720;
     constexpr RHI::PixelFormat sceneColorFormat = RHI::PixelFormat::rgba8Unorm;
-    constexpr const char* editorDockSpaceName = "EditorDockSpace";
-    constexpr const char* editorDockSpaceId = "EditorDockSpaceV3";
 
     static Runtime::CanvasDesc CreateSceneRenderCanvasDesc()
     {
@@ -87,50 +74,11 @@ namespace Editor::Internal {
         config.GlyphMaxAdvanceX = inSizePixels;
         Assert(inFontAtlas.AddFontFromFileTTF(fontPath.c_str(), inSizePixels, &config, glyphRanges.Data) != nullptr);
     }
-
-    static float CalculatePanelRatio(float inAvailableSize, float inDefaultRatio, float inMinSize, float inMaxSize)
-    {
-        if (inAvailableSize <= 0.0f) {
-            return inDefaultRatio;
-        }
-        const float panelSize = std::clamp(inAvailableSize * inDefaultRatio, inMinSize, inMaxSize);
-        return std::min(panelSize / inAvailableSize, 0.5f);
-    }
-
-    static void BuildInitialEditorDockLayout(ImGuiID inDockSpaceId, const ImVec2& inSize)
-    {
-        if (ImGui::DockBuilderGetNode(inDockSpaceId) != nullptr) {
-            return;
-        }
-
-        ImGui::DockBuilderAddNode(inDockSpaceId, ImGuiDockNodeFlags_DockSpace);
-        ImGui::DockBuilderSetNodeSize(inDockSpaceId, inSize);
-
-        ImGuiID sceneNodeId = 0;
-        ImGuiID rightColumnNodeId = 0;
-        ImGuiID outlinerNodeId = 0;
-        ImGuiID inspectorNodeId = 0;
-        ImGuiID bottomNodeId = 0;
-        const float rightColumnRatio = CalculatePanelRatio(inSize.x, defaultRightColumnRatio, minRightColumnWidth, maxRightColumnWidth);
-        const float bottomPanelRatio = CalculatePanelRatio(inSize.y, defaultBottomPanelRatio, minBottomPanelHeight, maxBottomPanelHeight);
-        const float outlinerRatio = CalculatePanelRatio(inSize.y, defaultOutlinerRatio, minOutlinerHeight, maxOutlinerHeight);
-        ImGui::DockBuilderSplitNode(inDockSpaceId, ImGuiDir_Right, rightColumnRatio, &rightColumnNodeId, &sceneNodeId);
-        ImGui::DockBuilderSplitNode(sceneNodeId, ImGuiDir_Down, bottomPanelRatio, &bottomNodeId, &sceneNodeId);
-        ImGui::DockBuilderSplitNode(rightColumnNodeId, ImGuiDir_Up, outlinerRatio, &outlinerNodeId, &inspectorNodeId);
-
-        ImGui::DockBuilderDockWindow(PanelNames::scene, sceneNodeId);
-        ImGui::DockBuilderDockWindow(PanelNames::outliner, outlinerNodeId);
-        ImGui::DockBuilderDockWindow(PanelNames::inspector, inspectorNodeId);
-        ImGui::DockBuilderDockWindow(PanelNames::assets, bottomNodeId);
-        ImGui::DockBuilderDockWindow(PanelNames::log, bottomNodeId);
-        ImGui::DockBuilderFinish(inDockSpaceId);
-    }
 }
 
 namespace Editor {
     EditorApplication::EditorApplication(EditorApplicationDesc inDesc)
         : desc(std::move(inDesc))
-        , editorFrame()
         , lastFrameSeconds(Common::TimePoint::Now().ToSeconds())
         , lastCursorX(0.0)
         , lastCursorY(0.0)
@@ -158,6 +106,7 @@ namespace Editor {
             sceneRenderCanvas = Common::MakeUnique<Runtime::Canvas>(window->GetDevice(), Internal::CreateSceneRenderCanvasDesc());
             sceneClient.SetRenderSurface(sceneRenderCanvas.Get());
             sceneClient.OpenProjectLevel();
+            editorFrame = Common::MakeUnique<EditorFrame>(*context, *sceneRenderCanvas, EditorLogStream::Get(), Core::Paths::GameAssetDir());
         } else {
             projectService = Common::MakeUnique<ProjectService>(Core::Paths::EngineResDir() / "Editor" / "ProjectTemplates");
             recentProjects = Common::MakeUnique<RecentProjectStore>(Core::Paths::EngineCacheDir() / "Editor" / "ProjectHub" / "RecentProjects.json");
@@ -177,6 +126,7 @@ namespace Editor {
             context->GetSceneClient().SetRenderSurface(nullptr);
         }
         imguiRenderer->WaitIdle();
+        editorFrame.Reset();
         context.Reset();
         sceneRenderCanvas.Reset();
         projectHubFrame.Reset();
@@ -254,40 +204,9 @@ namespace Editor {
         });
     }
 
-    void EditorApplication::DrawDockSpace() const
-    {
-        const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(mainViewport->WorkPos);
-        ImGui::SetNextWindowSize(mainViewport->WorkSize);
-        ImGui::SetNextWindowViewport(mainViewport->ID);
-
-        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking
-            | ImGuiWindowFlags_NoTitleBar
-            | ImGuiWindowFlags_NoCollapse
-            | ImGuiWindowFlags_NoResize
-            | ImGuiWindowFlags_NoMove
-            | ImGuiWindowFlags_NoBringToFrontOnFocus
-            | ImGuiWindowFlags_NoNavFocus
-            | ImGuiWindowFlags_NoBackground;
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-        ImGui::Begin(Internal::editorDockSpaceName, nullptr, windowFlags);
-        ImGui::PopStyleVar(3);
-
-        const ImGuiID dockSpaceId = ImGui::GetID(Internal::editorDockSpaceId);
-        Internal::BuildInitialEditorDockLayout(dockSpaceId, mainViewport->WorkSize);
-        ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
-        ImGui::End();
-    }
-
     void EditorApplication::RenderEditorFrame()
     {
-        DrawDockSpace();
-        context->GetSceneClient().GetWorld().EditorAccess([&](Runtime::ECRegistry& registry) -> void {
-            editorFrame.Render(*context, registry, *sceneRenderCanvas, requestQuit);
-        });
+        editorFrame->Render(requestQuit);
         if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false)) {
             context->GetSceneClient().SaveLevel();
         }

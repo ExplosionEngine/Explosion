@@ -7,15 +7,14 @@
 #include <filesystem>
 #include <string>
 
+#include <Common/FileSystem.h>
 #include <Editor/Asset/AssetFileSystem.h>
+#include <Editor/Tab/EditorTab.h>
 
 namespace Editor {
-    class AssetsPanel final {
+    class AssetsTab final : public EditorTab {
     public:
-        AssetsPanel();
-        ~AssetsPanel();
-
-        void Render(bool& inOutOpen);
+        explicit AssetsTab(Common::Path inAssetDirectory);
 
     private:
         enum class ClipboardMode : uint8_t {
@@ -24,6 +23,7 @@ namespace Editor {
             move
         };
 
+        void RenderContents() override;
         void RenderToolbar();
         void RenderBreadcrumbs();
         void RenderDirectoryTree(const std::filesystem::path& inDirectory, const char* inLabel);

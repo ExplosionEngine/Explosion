@@ -41,7 +41,6 @@ namespace Editor {
         void InitializeImGui();
         void ShutdownImGui();
         void InstallCallbacks();
-        void DrawDockSpace() const;
         void RenderEditorFrame();
         void HandleKey(int inKey, int inAction);
         void HandleMouseButton(int inButton, int inAction);
@@ -59,7 +58,7 @@ namespace Editor {
         Common::UniquePtr<RecentProjectStore> recentProjects;
         Common::UniquePtr<ProjectLauncher> projectLauncher;
         Common::UniquePtr<ProjectHubFrame> projectHubFrame;
-        EditorFrame editorFrame;
+        Common::UniquePtr<EditorFrame> editorFrame;
         double lastFrameSeconds;
         double lastCursorX;
         double lastCursorY;

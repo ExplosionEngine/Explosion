@@ -14,7 +14,7 @@
 
 namespace Editor {
     // log stream attached to the engine logger that keeps a bounded history and forwards structured entries to
-    // listeners (the log panel backend), log calls arrive from arbitrary threads so everything is mutex-guarded and
+    // listeners (the log tab backend), log calls arrive from arbitrary threads so everything is mutex-guarded and
     // listeners must marshal to their own thread themselves
     class EditorLogStream final : public Core::LogStream {
     public:

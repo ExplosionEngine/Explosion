@@ -1,43 +1,29 @@
-//
-// Created by johnk on 2026/7/7.
-//
-
 #pragma once
 
-#include <string>
-#include <vector>
+#include <Common/FileSystem.h>
 
-#include <Editor/EditorContext.h>
-#include <Editor/Panel/EditorPanels.h>
-#include <Runtime/Canvas.h>
+#include <Editor/Tab/EditorTabs.h>
 
-namespace Editor::Internal {
-    struct EditorTabVisibility {
-        bool scene;
-        bool outliner;
-        bool inspector;
-        bool log;
-    };
+namespace Runtime {
+    class Canvas;
 }
 
 namespace Editor {
+    class EditorContext;
+    class EditorLogStream;
+
     class EditorFrame final {
     public:
-        EditorFrame();
+        EditorFrame(EditorContext& inContext, Runtime::Canvas& inSceneRenderCanvas, EditorLogStream& inLogStream, Common::Path inAssetDirectory);
         ~EditorFrame();
 
-        void Render(EditorContext& inContext, Runtime::ECRegistry& inRegistry, Runtime::Canvas& inSceneRenderCanvas, bool& outRequestQuit);
+        void Render(bool& outRequestQuit);
 
     private:
-        void RenderMenuBar(EditorContext& inContext, bool& outRequestQuit);
-        void RenderSceneTab(EditorContext& inContext, Runtime::Canvas& inSceneRenderCanvas, bool& inOutOpen);
-        void RenderOutlinerTab(EditorContext& inContext, Runtime::ECRegistry& inRegistry, bool& inOutOpen);
-        void RenderInspectorTab(EditorContext& inContext, Runtime::ECRegistry& inRegistry, bool& inOutOpen);
-        void RenderLogTab(bool& inOutOpen);
+        void DrawDockSpace() const;
+        void RenderMenuBar(bool& outRequestQuit);
 
-        std::string createEntityName;
-        std::vector<Runtime::CompClass> componentClasses;
-        Internal::EditorTabVisibility tabVisibility;
-        EditorPanels panels;
+        EditorContext& context;
+        EditorTabs tabs;
     };
 }

@@ -6,6 +6,9 @@ Before starting any work, agents must read `AGENTS.local.md` at the repository r
 
 - Prioritize sound abstractions and a single source of truth over a minimal diff.
 - Prefer clear names and small functions; comment only when intent cannot be expressed in code.
+- Avoid excessive defensive programming and validation. Write only meaningful tests. Do not overengineer compatibility
+  or guard against scenarios that will not occur in practice.
+- Use English exclusively throughout this project. Code, comments, and documentation must not contain other languages.
 - Code has no line-length limit; wrap only for readability. Wrap comments at about 120 characters with roughly even lines.
 - In headers, declare the complete interface first, then put out-of-line definitions in a second namespace block.
   Do not put function bodies inside class definitions. Put helper types in `Common::Internal`.
