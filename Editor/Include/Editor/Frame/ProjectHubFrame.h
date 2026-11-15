@@ -1,62 +1,34 @@
-//
-// Created by johnk on 2026/7/8.
-//
-
 #pragma once
 
 #include <string>
 #include <vector>
 
-#include <Common/FileSystem.h>
-#include <Mirror/Meta.h>
+#include <Editor/Project/ProjectLauncher.h>
+#include <Editor/Project/ProjectService.h>
+#include <Editor/Project/RecentProjectStore.h>
 
 namespace Editor {
-    struct EClass() RecentProjectInfo {
-        EClassBody(RecentProjectInfo)
-
-        EProperty() std::string name;
-        EProperty() std::string path;
-    };
-
-    struct EClass() ProjectTemplateInfo {
-        EClassBody(ProjectTemplateInfo)
-
-        EProperty() std::string name;
-        EProperty() std::string path;
-    };
-
-    struct EClass() CreateProjectResult {
-        EClassBody(CreateProjectResult)
-
-        EProperty() bool success;
-        EProperty() std::string error;
-        EProperty() std::string projectPath;
-    };
-
-    class EditorWindow;
-
     class ProjectHubFrame final {
     public:
-        ProjectHubFrame();
+        ProjectHubFrame(ProjectService& inProjectService, RecentProjectStore& inRecentProjects, ProjectLauncher& inProjectLauncher);
         ~ProjectHubFrame();
 
-        void Render(EditorWindow& inWindow, const std::string& inRhiType, bool inGpuDebug, bool inSoftwareGpu);
+        bool Render();
 
     private:
-        void RenderActionBar(EditorWindow& inWindow, const std::string& inRhiType, bool inGpuDebug, bool inSoftwareGpu);
-        void RenderRecentProjects(EditorWindow& inWindow, const std::string& inRhiType, bool inGpuDebug, bool inSoftwareGpu);
-        void RenderCreateProjectPopup(EditorWindow& inWindow, const std::string& inRhiType, bool inGpuDebug, bool inSoftwareGpu);
-        CreateProjectResult CreateProject();
-        void OpenProject(EditorWindow& inWindow, const std::string& inProjectPath, const std::string& inRhiType, bool inGpuDebug, bool inSoftwareGpu);
-        void SaveRecentProjects() const;
-        void TouchRecentProject(const std::string& inProjectPath);
+        void RenderActionBar();
+        void RenderRecentProjects();
+        void RenderCreateProjectPopup();
+        void OpenProject(const Common::Path& inProjectPath);
 
-        Common::Path recentProjectsFile;
+        ProjectService& projectService;
+        RecentProjectStore& recentProjects;
+        ProjectLauncher& projectLauncher;
         std::vector<ProjectTemplateInfo> projectTemplates;
-        std::vector<RecentProjectInfo> recentProjects;
         std::string projectName;
         std::string directory;
         int selectedTemplateIndex;
         std::string statusMessage;
+        bool requestClose;
     };
 }

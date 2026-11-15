@@ -2,29 +2,19 @@
 // Created by johnk on 2026/7/8.
 //
 
-#include <cstdlib>
 #include <format>
 #include <ranges>
-#include <string_view>
-#include <tuple>
 
 #include <imgui.h>
 #include <imgui_stdlib.h>
 
-#include <Common/Result.h>
-#include <Common/Serialization.h>
-#include <Common/Template.h>
-#include <Core/Paths.h>
 #include <Editor/EditorLog.h>
-#include <Editor/EditorWindow.h>
 #include <Editor/Frame/ProjectHubFrame.h>
 #include <Editor/Utils/PlatformUtils.h>
 #include <Editor/Widget/IconWidgets.h>
 #include <Editor/Widget/TablerIcons.h>
 
 namespace Editor::ProjectHub::Internal {
-    constexpr std::string_view templateFileExtension = ".tpl";
-    constexpr std::string_view cmakeMinVersion = "3.25";
     constexpr float actionButtonHeight = 58.0f;
     constexpr float recentProjectHeight = 68.0f;
     constexpr float contentSpacing = 12.0f;
@@ -49,85 +39,33 @@ namespace Editor::ProjectHub::Internal {
         ImGui::PopID();
         return ImGui::IsItemClicked();
     }
-
-    static Common::Path StripTemplateExtension(const Common::Path& inRelativePath)
-    {
-        const std::string str = inRelativePath.String();
-        return { str.substr(0, str.size() - templateFileExtension.size()) };
-    }
-
-    static Common::Result<void, std::string> RenderProjectTemplate(const Common::Path& inTemplateDir, const Common::Path& inProjectDir, const std::string& inProjectName)
-    {
-        Common::TemplateEngine templateEngine;
-        templateEngine
-            .Set("projectName", inProjectName)
-            .Set("cmakeMinVersion", std::string(cmakeMinVersion));
-
-        Common::Result<void, std::string> result = Common::Ok();
-        inTemplateDir.TraverseRecurse([&](const Common::Path& inPath) -> bool {
-            if (inPath.IsDirectory()) {
-                return true;
-            }
-
-            const Common::Path relativePath = inPath.Relative(inTemplateDir);
-            const std::string extension = inPath.Extension();
-            const bool isTemplate = std::string_view(extension) == templateFileExtension;
-            const Common::Path dstPath = inProjectDir / (isTemplate ? StripTemplateExtension(relativePath) : relativePath);
-            dstPath.Parent().MakeDir();
-
-            if (!isTemplate) {
-                inPath.CopyTo(dstPath);
-                return true;
-            }
-            if (auto renderResult = templateEngine.RenderFileTo(inPath.String(), dstPath.String());
-                renderResult.IsErr()) {
-                result = Common::Err(renderResult.Error());
-                return false;
-            }
-            return true;
-        });
-        return result;
-    }
-
-    static std::string LaunchCommand(const std::string& inExecutable, const std::string& inProjectPath, const std::string& inRhiType, bool inGpuDebug, bool inSoftwareGpu)
-    {
-        const std::string gpuDebugArg = inGpuDebug ? " -gpuDebug" : "";
-        const std::string softwareGpuArg = inSoftwareGpu ? " -softwareGpu" : "";
-#if PLATFORM_WINDOWS
-        return std::format("start \"\" \"{}\" -project \"{}\" -rhi {}{}{}", inExecutable, inProjectPath, inRhiType, gpuDebugArg, softwareGpuArg);
-#else
-        return std::format("\"{}\" -project \"{}\" -rhi {}{}{} &", inExecutable, inProjectPath, inRhiType, gpuDebugArg, softwareGpuArg);
-#endif
-    }
 }
 
 namespace Editor {
-    ProjectHubFrame::ProjectHubFrame()
-        : recentProjectsFile(Core::Paths::EngineCacheDir() / "Editor" / "ProjectHub" / "RecentProjects.json")
-        , projectName()
-        , directory()
+    ProjectHubFrame::ProjectHubFrame(ProjectService& inProjectService, RecentProjectStore& inRecentProjects, ProjectLauncher& inProjectLauncher)
+        : projectService(inProjectService)
+        , recentProjects(inRecentProjects)
+        , projectLauncher(inProjectLauncher)
         , selectedTemplateIndex(0)
+        , requestClose(false)
     {
-        const Common::Path projectTemplatesRoot = Core::Paths::EngineResDir() / "Editor" / "ProjectTemplates";
-        (void) projectTemplatesRoot.Traverse([this](const Common::Path& inPath) -> bool {
-            if (inPath.IsFile()) {
-                return true;
+        auto templatesResult = projectService.ListTemplates();
+        if (templatesResult.IsOk()) {
+            projectTemplates = std::move(templatesResult.Value());
+        } else {
+            statusMessage = templatesResult.Error();
+        }
+        if (auto result = recentProjects.Load(); result.IsErr()) {
+            if (!statusMessage.empty()) {
+                statusMessage += "\n";
             }
-            projectTemplates.emplace_back(ProjectTemplateInfo { inPath.DirName(), inPath.String() });
-            return true;
-        });
-
-        if (recentProjectsFile.Exists()) {
-            Common::JsonDeserializeFromFile(recentProjectsFile.String(), recentProjects);
+            statusMessage += result.Error();
         }
     }
 
-    ProjectHubFrame::~ProjectHubFrame()
-    {
-        SaveRecentProjects();
-    }
+    ProjectHubFrame::~ProjectHubFrame() = default;
 
-    void ProjectHubFrame::Render(EditorWindow& inWindow, const std::string& inRhiType, bool inGpuDebug, bool inSoftwareGpu)
+    bool ProjectHubFrame::Render()
     {
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -144,21 +82,22 @@ namespace Editor {
                 | ImGuiWindowFlags_NoBringToFrontOnFocus);
         ImGui::PopStyleVar(2);
 
-        RenderActionBar(inWindow, inRhiType, inGpuDebug, inSoftwareGpu);
+        RenderActionBar();
         ImGui::Dummy(ImVec2(0.0f, 22.0f));
-        RenderRecentProjects(inWindow, inRhiType, inGpuDebug, inSoftwareGpu);
-        RenderCreateProjectPopup(inWindow, inRhiType, inGpuDebug, inSoftwareGpu);
+        RenderRecentProjects();
+        RenderCreateProjectPopup();
         ImGui::End();
+        return requestClose;
     }
 
-    void ProjectHubFrame::RenderActionBar(EditorWindow& inWindow, const std::string& inRhiType, bool inGpuDebug, bool inSoftwareGpu)
+    void ProjectHubFrame::RenderActionBar()
     {
         const float spacing = ImGui::GetStyle().ItemSpacing.x;
         const float buttonWidth = (ImGui::GetContentRegionAvail().x - spacing) * 0.5f;
         const std::string openLabel = Widgets::Label(Icons::Tabler::folderOpen, "Open");
         if (Widgets::PrimaryButton(openLabel.c_str(), ImVec2(buttonWidth, ProjectHub::Internal::actionButtonHeight))) {
             if (const auto selectedDirectory = PlatformUtils::SelectDirectory("Open Explosion Project")) {
-                OpenProject(inWindow, *selectedDirectory, inRhiType, inGpuDebug, inSoftwareGpu);
+                OpenProject(Common::Path(*selectedDirectory));
             }
         }
 
@@ -170,11 +109,11 @@ namespace Editor {
         }
     }
 
-    void ProjectHubFrame::RenderRecentProjects(EditorWindow& inWindow, const std::string& inRhiType, bool inGpuDebug, bool inSoftwareGpu)
+    void ProjectHubFrame::RenderRecentProjects()
     {
         const std::string recentProjectsLabel = Widgets::Label(Icons::Tabler::folder, "Recent projects");
         ImGui::TextUnformatted(recentProjectsLabel.c_str());
-        const std::string projectCount = std::to_string(recentProjects.size());
+        const std::string projectCount = std::to_string(recentProjects.Projects().size());
         ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize(projectCount.c_str()).x);
         ImGui::TextDisabled("%s", projectCount.c_str());
         ImGui::Dummy(ImVec2(0.0f, 7.0f));
@@ -189,14 +128,14 @@ namespace Editor {
 
         ImGui::BeginChild("##RecentProjects", ImVec2(0.0f, 0.0f), false);
         std::string projectToOpen;
-        for (const auto& project : std::views::reverse(recentProjects)) {
+        for (const auto& project : std::views::reverse(recentProjects.Projects())) {
             if (ProjectHub::Internal::RenderRecentProject(project)) {
                 projectToOpen = project.path;
             }
             ImGui::Dummy(ImVec2(0.0f, ProjectHub::Internal::contentSpacing));
         }
 
-        if (recentProjects.empty()) {
+        if (recentProjects.Projects().empty()) {
             const ImVec2 emptyMin = ImGui::GetCursorScreenPos();
             const ImVec2 emptyMax(emptyMin.x + ImGui::GetContentRegionAvail().x, emptyMin.y + 118.0f);
             ImGui::GetWindowDrawList()->AddRectFilled(emptyMin, emptyMax, ImGui::GetColorU32(ImGuiCol_FrameBg), 8.0f);
@@ -210,11 +149,11 @@ namespace Editor {
         ImGui::EndChild();
 
         if (!projectToOpen.empty()) {
-            OpenProject(inWindow, projectToOpen, inRhiType, inGpuDebug, inSoftwareGpu);
+            OpenProject(Common::Path(projectToOpen));
         }
     }
 
-    void ProjectHubFrame::RenderCreateProjectPopup(EditorWindow& inWindow, const std::string& inRhiType, bool inGpuDebug, bool inSoftwareGpu)
+    void ProjectHubFrame::RenderCreateProjectPopup()
     {
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
@@ -285,13 +224,21 @@ namespace Editor {
             ImGui::SameLine();
             const std::string confirmLabel = Widgets::Label(Icons::Tabler::check, "Create##Confirm");
             if (Widgets::PrimaryButton(confirmLabel.c_str(), ImVec2(88.0f, 36.0f))) {
-                const CreateProjectResult result = CreateProject();
-                if (result.success) {
-                    statusMessage.clear();
-                    ImGui::CloseCurrentPopup();
-                    OpenProject(inWindow, result.projectPath, inRhiType, inGpuDebug, inSoftwareGpu);
+                if (projectTemplates.empty()) {
+                    statusMessage = "No project templates are available.";
                 } else {
-                    statusMessage = result.error;
+                    const auto result = projectService.CreateProject(CreateProjectDesc {
+                        .name = projectName,
+                        .parentDirectory = Common::Path(directory),
+                        .templateDirectory = projectTemplates[selectedTemplateIndex].path
+                    });
+                    if (result.IsOk()) {
+                        LogInfo(ProjectHub, "created project '{}' at '{}'", projectName, result.Value().String());
+                        ImGui::CloseCurrentPopup();
+                        OpenProject(result.Value());
+                    } else {
+                        statusMessage = result.Error();
+                    }
                 }
             }
             ImGui::EndPopup();
@@ -299,65 +246,21 @@ namespace Editor {
         ImGui::PopStyleVar(4);
     }
 
-    CreateProjectResult ProjectHubFrame::CreateProject()
+    void ProjectHubFrame::OpenProject(const Common::Path& inProjectPath)
     {
-        if (projectName.empty() || directory.empty() || projectTemplates.empty()
-            || selectedTemplateIndex < 0 || selectedTemplateIndex >= static_cast<int>(projectTemplates.size())) {
-            return { .success = false, .error = "Project name, directory and template must not be empty.", .projectPath = {} };
-        }
-
-        const std::string templatePath = projectTemplates[selectedTemplateIndex].path;
-        const Common::Path templateDir(templatePath);
-        if (!templateDir.Exists() || !templateDir.IsDirectory()) {
-            return { .success = false, .error = std::format("Project template '{}' does not exist.", templatePath), .projectPath = {} };
-        }
-
-        const Common::Path projectDir = Common::Path(directory) / projectName;
-        if (projectDir.Exists()) {
-            return { .success = false, .error = std::format("Target directory '{}' already exists.", projectDir.String()), .projectPath = {} };
-        }
-
-        if (const auto result = ProjectHub::Internal::RenderProjectTemplate(templateDir, projectDir, projectName);
-            result.IsErr()) {
-            return { .success = false, .error = result.Error(), .projectPath = {} };
-        }
-
-        TouchRecentProject(projectDir.String());
-        SaveRecentProjects();
-        LogInfo(ProjectHub, "created project '{}' at '{}'", projectName, projectDir.String());
-        return { .success = true, .error = {}, .projectPath = projectDir.String() };
-    }
-
-    void ProjectHubFrame::OpenProject(EditorWindow& inWindow, const std::string& inProjectPath, const std::string& inRhiType, bool inGpuDebug, bool inSoftwareGpu)
-    {
-        const Common::Path projectDir(inProjectPath);
-        if (!projectDir.Exists() || !projectDir.IsDirectory()) {
-            statusMessage = std::format("Project '{}' does not exist.", inProjectPath);
+        const auto project = ProjectService::ValidateProject(inProjectPath);
+        if (project.IsErr()) {
+            statusMessage = project.Error();
             return;
         }
-
-        TouchRecentProject(inProjectPath);
-        SaveRecentProjects();
-
-        const std::string command = ProjectHub::Internal::LaunchCommand(Core::Paths::ExecutablePath().String(), inProjectPath, inRhiType, inGpuDebug, inSoftwareGpu);
-        std::ignore = std::system(command.c_str());
-        inWindow.RequestClose();
-    }
-
-    void ProjectHubFrame::SaveRecentProjects() const
-    {
-        recentProjectsFile.Parent().MakeDir();
-        Common::JsonSerializeToFile(recentProjectsFile.String(), recentProjects);
-    }
-
-    void ProjectHubFrame::TouchRecentProject(const std::string& inProjectPath)
-    {
-        std::string touchedProjectName = Common::Path(inProjectPath).DirName();
-        if (const auto iter = std::ranges::find_if(recentProjects, [&](const RecentProjectInfo& info) -> bool { return info.path == inProjectPath; });
-            iter != recentProjects.end()) {
-            touchedProjectName = iter->name;
-            recentProjects.erase(iter);
+        if (const auto result = recentProjects.Record(project.Value()); result.IsErr()) {
+            LogWarning(ProjectHub, "{}", result.Error());
         }
-        recentProjects.emplace_back(RecentProjectInfo { touchedProjectName, inProjectPath });
+        if (const auto result = projectLauncher.Launch(project.Value()); result.IsErr()) {
+            statusMessage = result.Error();
+            return;
+        }
+        statusMessage.clear();
+        requestClose = true;
     }
 }

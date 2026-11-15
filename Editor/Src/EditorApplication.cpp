@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <format>
-#include <tuple>
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -16,7 +15,6 @@
 #include <Editor/EditorApplication.h>
 #include <Editor/Panel/EditorPanelNames.h>
 #include <Editor/Theme/Theme.h>
-#include <Editor/Utils/ImGuiCompatibility.h>
 #include <Editor/Widget/TablerIcons.h>
 #include <Runtime/Engine.h>
 
@@ -127,25 +125,6 @@ namespace Editor::Internal {
         ImGui::DockBuilderDockWindow(PanelNames::log, bottomNodeId);
         ImGui::DockBuilderFinish(inDockSpaceId);
     }
-
-    static ImDrawData* CloneDrawData(const ImDrawData& inDrawData)
-    {
-        auto* result = IM_NEW(ImDrawData)();
-        result->Valid = inDrawData.Valid;
-        result->CmdListsCount = inDrawData.CmdListsCount;
-        result->TotalIdxCount = inDrawData.TotalIdxCount;
-        result->TotalVtxCount = inDrawData.TotalVtxCount;
-        result->DisplayPos = inDrawData.DisplayPos;
-        result->DisplaySize = inDrawData.DisplaySize;
-        result->FramebufferScale = inDrawData.FramebufferScale;
-        result->OwnerViewport = inDrawData.OwnerViewport;
-        result->Textures = inDrawData.Textures;
-        result->CmdLists.resize(inDrawData.CmdListsCount);
-        for (int i = 0; i < inDrawData.CmdListsCount; i++) {
-            result->CmdLists[i] = inDrawData.CmdLists[i]->CloneOutput();
-        }
-        return result;
-    }
 }
 
 namespace Editor {
@@ -159,13 +138,17 @@ namespace Editor {
         , requestQuit(false)
     {
         InitializeImGui();
+        auto& renderModule = Runtime::EngineHolder::Get().GetRenderModule();
         window = Common::MakeUnique<EditorWindow>(
+            *renderModule.GetDevice(), renderModule.GetRenderThread(),
             EditorWindowDesc {
                 .title = Internal::MakeWindowTitle(desc),
                 .width = Internal::GetInitialWindowWidth(desc),
                 .height = Internal::GetInitialWindowHeight(desc),
                 .maximized = desc.mode == EditorApplicationMode::editor
             });
+        imguiPlatform = Common::MakeUnique<ImGuiPlatformBackend>(*window);
+        imguiRenderer = Common::MakeUnique<ImGuiRhiRenderer>(*window, renderModule.GetRenderThread());
         InstallCallbacks();
 
         if (desc.mode == EditorApplicationMode::editor) {
@@ -176,7 +159,15 @@ namespace Editor {
             sceneClient.SetRenderSurface(sceneRenderCanvas.Get());
             sceneClient.OpenProjectLevel();
         } else {
-            projectHubFrame = Common::MakeUnique<ProjectHubFrame>();
+            projectService = Common::MakeUnique<ProjectService>(Core::Paths::EngineResDir() / "Editor" / "ProjectTemplates");
+            recentProjects = Common::MakeUnique<RecentProjectStore>(Core::Paths::EngineCacheDir() / "Editor" / "ProjectHub" / "RecentProjects.json");
+            projectLauncher = Common::MakeUnique<ProjectLauncher>(EditorLaunchOptions {
+                .executablePath = Core::Paths::ExecutablePath().String(),
+                .rhiType = desc.rhiType,
+                .gpuDebug = desc.gpuDebug,
+                .softwareGpu = desc.softwareGpu
+            });
+            projectHubFrame = Common::MakeUnique<ProjectHubFrame>(*projectService, *recentProjects, *projectLauncher);
         }
     }
 
@@ -185,12 +176,12 @@ namespace Editor {
         if (context != nullptr) {
             context->GetSceneClient().SetRenderSurface(nullptr);
         }
-        if (window != nullptr) {
-            window->WaitRenderingIdle();
-        }
-        sceneRenderCanvas.Reset();
+        imguiRenderer->WaitIdle();
         context.Reset();
+        sceneRenderCanvas.Reset();
         projectHubFrame.Reset();
+        imguiPlatform.Reset();
+        imguiRenderer.Reset();
         window.Reset();
         ShutdownImGui();
     }
@@ -201,13 +192,21 @@ namespace Editor {
             window->PollEvents();
             window->RecreateSwapChainIfNeeded();
             const float deltaSeconds = NextDeltaSeconds();
-            BeginImGuiFrame(deltaSeconds);
+            imguiRenderer->NewFrame();
+            imguiPlatform->NewFrame(deltaSeconds);
+            ImGui::NewFrame();
 
             if (desc.mode == EditorApplicationMode::editor) {
-                RenderEditorFrame(deltaSeconds);
+                RenderEditorFrame();
             } else {
-                RenderProjectHubFrame();
+                requestQuit = projectHubFrame->Render();
             }
+            if (requestQuit) {
+                window->RequestClose();
+            }
+            ImGui::Render();
+            Runtime::EngineHolder::Get().Tick(deltaSeconds);
+            imguiRenderer->Submit(*ImGui::GetDrawData());
         }
         return 0;
     }
@@ -218,8 +217,6 @@ namespace Editor {
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.BackendPlatformName = "ExplosionGLFW";
-        io.BackendRendererName = "ExplosionRHI";
         if (desc.mode == EditorApplicationMode::editor) {
             const Common::Path iniFilePath = Core::Paths::GameCacheDir() / "Editor" / "Layout" / "Main.ini";
             iniFilePath.Parent().MakeDir();
@@ -242,41 +239,19 @@ namespace Editor {
 
     void EditorApplication::InstallCallbacks()
     {
-        GLFWwindow* nativeWindow = window->GetNativeWindow();
-        glfwSetWindowUserPointer(nativeWindow, this);
-        glfwSetKeyCallback(nativeWindow, [](GLFWwindow* inWindow, int inKey, int inScancode, int inAction, int inMods) -> void {
-            static_cast<EditorApplication*>(glfwGetWindowUserPointer(inWindow))->HandleKey(inKey, inScancode, inAction, inMods);
+        window->onKey.BindLambda([this](int inKey, int, int inAction, int) -> void {
+            HandleKey(inKey, inAction);
         });
-        glfwSetCharCallback(nativeWindow, [](GLFWwindow* inWindow, unsigned int inCodepoint) -> void {
-            static_cast<EditorApplication*>(glfwGetWindowUserPointer(inWindow))->HandleChar(inCodepoint);
+        window->onMouseButton.BindLambda([this](int inButton, int inAction, int) -> void {
+            HandleMouseButton(inButton, inAction);
         });
-        glfwSetMouseButtonCallback(nativeWindow, [](GLFWwindow* inWindow, int inButton, int inAction, int inMods) -> void {
-            static_cast<EditorApplication*>(glfwGetWindowUserPointer(inWindow))->HandleMouseButton(inButton, inAction, inMods);
+        window->onCursor.BindMember<&EditorApplication::HandleCursor>(*this);
+        window->onFocus.BindLambda([this](bool inFocused) -> void {
+            if (!inFocused && context != nullptr) {
+                context->GetSceneClient().EndCameraLook();
+                hasLastCursor = false;
+            }
         });
-        glfwSetCursorPosCallback(nativeWindow, [](GLFWwindow* inWindow, double inX, double inY) -> void {
-            static_cast<EditorApplication*>(glfwGetWindowUserPointer(inWindow))->HandleCursor(inX, inY);
-        });
-        glfwSetScrollCallback(nativeWindow, [](GLFWwindow* inWindow, double inXOffset, double inYOffset) -> void {
-            static_cast<EditorApplication*>(glfwGetWindowUserPointer(inWindow))->HandleScroll(inXOffset, inYOffset);
-        });
-    }
-
-    void EditorApplication::BeginImGuiFrame(float inDeltaSeconds) const
-    {
-        int windowWidth = 0;
-        int windowHeight = 0;
-        int framebufferWidth = 0;
-        int framebufferHeight = 0;
-        glfwGetWindowSize(window->GetNativeWindow(), &windowWidth, &windowHeight);
-        glfwGetFramebufferSize(window->GetNativeWindow(), &framebufferWidth, &framebufferHeight);
-
-        ImGuiIO& io = ImGui::GetIO();
-        io.DisplaySize = ImVec2(static_cast<float>(windowWidth), static_cast<float>(windowHeight));
-        io.DisplayFramebufferScale = ImVec2(
-            windowWidth > 0 ? static_cast<float>(framebufferWidth) / static_cast<float>(windowWidth) : 1.0f,
-            windowHeight > 0 ? static_cast<float>(framebufferHeight) / static_cast<float>(windowHeight) : 1.0f);
-        io.DeltaTime = std::max(inDeltaSeconds, 1.0f / 1000.0f);
-        ImGui::NewFrame();
     }
 
     void EditorApplication::DrawDockSpace() const
@@ -307,46 +282,20 @@ namespace Editor {
         ImGui::End();
     }
 
-    void EditorApplication::RenderEditorFrame(float inDeltaSeconds)
+    void EditorApplication::RenderEditorFrame()
     {
         DrawDockSpace();
         context->GetSceneClient().GetWorld().EditorAccess([&](Runtime::ECRegistry& registry) -> void {
             editorFrame.Render(*context, registry, *sceneRenderCanvas, requestQuit);
         });
-        if (requestQuit) {
-            window->RequestClose();
-        }
-
         if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false)) {
             context->GetSceneClient().SaveLevel();
         }
-
-        ImGui::Render();
-        window->SetDrawData(Internal::CloneDrawData(*ImGui::GetDrawData()));
-        Runtime::EngineHolder::Get().Tick(inDeltaSeconds);
-        window->RenderPendingUi();
     }
 
-    void EditorApplication::RenderProjectHubFrame()
+    void EditorApplication::HandleKey(int inKey, int inAction)
     {
-        projectHubFrame->Render(*window, desc.rhiType, desc.gpuDebug, desc.softwareGpu);
-        ImGui::Render();
-        Runtime::EngineHolder::Get().Tick(ImGui::GetIO().DeltaTime);
-        window->RenderUiOnly(*ImGui::GetDrawData());
-    }
-
-    void EditorApplication::HandleKey(int inKey, int inScancode, int inAction, int inMods)
-    {
-        std::ignore = inScancode;
-        ImGuiCompatibility::UpdateKeyModifiers(inMods);
-
-        ImGuiIO& io = ImGui::GetIO();
-        const ImGuiKey imguiKey = ImGuiCompatibility::ToImGuiKey(inKey);
-        if (imguiKey != ImGuiKey_None) {
-            io.AddKeyEvent(imguiKey, inAction != GLFW_RELEASE);
-            io.SetKeyEventNativeData(imguiKey, inKey, inScancode);
-        }
-
+        const ImGuiIO& io = ImGui::GetIO();
         if (context != nullptr) {
             auto& sceneClient = context->GetSceneClient();
             if (inKey == GLFW_KEY_ESCAPE && inAction == GLFW_PRESS) {
@@ -361,18 +310,8 @@ namespace Editor {
         }
     }
 
-    void EditorApplication::HandleChar(uint32_t inCodepoint) const
+    void EditorApplication::HandleMouseButton(int inButton, int inAction)
     {
-        ImGui::GetIO().AddInputCharacter(inCodepoint);
-    }
-
-    void EditorApplication::HandleMouseButton(int inButton, int inAction, int inMods)
-    {
-        ImGuiCompatibility::UpdateKeyModifiers(inMods);
-        if (const auto imguiMouseButton = ImGuiCompatibility::ToImGuiMouseButton(inButton)) {
-            ImGui::GetIO().AddMouseButtonEvent(*imguiMouseButton, inAction == GLFW_PRESS);
-        }
-
         if (context == nullptr || inButton != GLFW_MOUSE_BUTTON_RIGHT) {
             return;
         }
@@ -387,7 +326,6 @@ namespace Editor {
 
     void EditorApplication::HandleCursor(double inX, double inY)
     {
-        ImGui::GetIO().AddMousePosEvent(static_cast<float>(inX), static_cast<float>(inY));
         if (context != nullptr) {
             auto& sceneClient = context->GetSceneClient();
             if (sceneClient.IsCameraLooking() && hasLastCursor) {
@@ -397,11 +335,6 @@ namespace Editor {
         lastCursorX = inX;
         lastCursorY = inY;
         hasLastCursor = true;
-    }
-
-    void EditorApplication::HandleScroll(double inXOffset, double inYOffset) const
-    {
-        ImGui::GetIO().AddMouseWheelEvent(static_cast<float>(inXOffset), static_cast<float>(inYOffset));
     }
 
     float EditorApplication::NextDeltaSeconds()

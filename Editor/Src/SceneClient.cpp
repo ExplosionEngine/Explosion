@@ -315,7 +315,7 @@ namespace Editor {
             });
         });
         if (window != nullptr) {
-            glfwSetInputMode(window->GetNativeWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            window->SetCursorCaptured(true);
         }
     }
 
@@ -335,7 +335,7 @@ namespace Editor {
             });
         });
         if (window != nullptr) {
-            glfwSetInputMode(window->GetNativeWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            window->SetCursorCaptured(false);
         }
     }
 

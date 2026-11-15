@@ -20,9 +20,11 @@ exp_add_executable(
 )
 
 file(GLOB editor_test_sources Test/*.cpp)
+file(GLOB editor_project_sources Src/Project/*.cpp)
 exp_add_test(
     NAME Editor.Test
-    SRC ${editor_test_sources} Src/Asset/AssetFileSystem.cpp
+    SRC ${editor_test_sources} Src/Asset/AssetFileSystem.cpp ${editor_project_sources} Src/ImGui/ImGuiDrawData.cpp
+    LIB imgui::imgui
     INC Include
 )
 

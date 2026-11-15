@@ -9,6 +9,8 @@
 #include <Editor/EditorWindow.h>
 #include <Editor/Frame/EditorFrame.h>
 #include <Editor/Frame/ProjectHubFrame.h>
+#include <Editor/ImGui/ImGuiPlatformBackend.h>
+#include <Editor/ImGui/ImGuiRhiRenderer.h>
 #include <Runtime/Canvas.h>
 
 namespace Editor {
@@ -39,22 +41,23 @@ namespace Editor {
         void InitializeImGui();
         void ShutdownImGui();
         void InstallCallbacks();
-        void BeginImGuiFrame(float inDeltaSeconds) const;
         void DrawDockSpace() const;
-        void RenderEditorFrame(float inDeltaSeconds);
-        void RenderProjectHubFrame();
-        void HandleKey(int inKey, int inScancode, int inAction, int inMods);
-        void HandleChar(uint32_t inCodepoint) const;
-        void HandleMouseButton(int inButton, int inAction, int inMods);
+        void RenderEditorFrame();
+        void HandleKey(int inKey, int inAction);
+        void HandleMouseButton(int inButton, int inAction);
         void HandleCursor(double inX, double inY);
-        void HandleScroll(double inXOffset, double inYOffset) const;
         float NextDeltaSeconds();
 
         EditorApplicationDesc desc;
         std::string imguiIniFilename;
         Common::UniquePtr<EditorWindow> window;
+        Common::UniquePtr<ImGuiPlatformBackend> imguiPlatform;
+        Common::UniquePtr<ImGuiRhiRenderer> imguiRenderer;
         Common::UniquePtr<EditorContext> context;
         Common::UniquePtr<Runtime::Canvas> sceneRenderCanvas;
+        Common::UniquePtr<ProjectService> projectService;
+        Common::UniquePtr<RecentProjectStore> recentProjects;
+        Common::UniquePtr<ProjectLauncher> projectLauncher;
         Common::UniquePtr<ProjectHubFrame> projectHubFrame;
         EditorFrame editorFrame;
         double lastFrameSeconds;
