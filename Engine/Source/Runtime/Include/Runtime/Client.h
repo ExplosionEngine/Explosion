@@ -5,7 +5,6 @@
 #pragma once
 
 #include <Runtime/Api.h>
-#include <Runtime/RenderSurface.h>
 
 namespace Runtime {
     class World;
@@ -15,7 +14,6 @@ namespace Runtime {
         virtual ~Client();
 
         virtual World& GetWorld() = 0;
-        virtual RenderSurface* GetRenderSurface() = 0;
 
     protected:
         Client();

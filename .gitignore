@@ -20,9 +20,9 @@ ThirdParty/ConanRecipes/**/CMakeUserPresets.json
 !ThirdParty/ConanRecipes/build_recipes.py
 aqtinstall.log
 
-# Agents
+# Local agent settings
 CLAUDE.md
-AGENTS.md
+/AGENTS.local.md
 
 # Test Project (generated from the editor's Default project template by CI / tooling)
 /TestProject

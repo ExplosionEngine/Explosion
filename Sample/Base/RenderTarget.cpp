@@ -51,10 +51,10 @@ SampleRenderTarget::SampleRenderTarget(Device& inDevice, const uint32_t inWidth,
 
 SampleRenderTarget::~SampleRenderTarget() = default;
 
-SwapChainRenderTarget::SwapChainRenderTarget(Device& inDevice, const uint32_t inWidth, const uint32_t inHeight, void* inPlatformWindow)
+SwapChainRenderTarget::SwapChainRenderTarget(Device& inDevice, const uint32_t inWidth, const uint32_t inHeight, void* inNativeWindowHandle)
     : SampleRenderTarget(inDevice, inWidth, inHeight)
     , format(PixelFormat::max)
-    , surface(device.CreateSurface(SurfaceCreateInfo(inPlatformWindow)))
+    , surface(device.CreateSurface(SurfaceCreateInfo(inNativeWindowHandle)))
     , textures()
     , textureStates()
 {

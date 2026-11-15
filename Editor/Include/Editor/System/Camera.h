@@ -5,7 +5,7 @@
 #include <Runtime/Meta.h>
 
 namespace Editor {
-    struct EClass(globalComp, transient) EditorCameraInput final {
+    struct EClass(comp, transient) EditorCameraInput final {
         EClassBody(EditorCameraInput)
 
         EditorCameraInput();

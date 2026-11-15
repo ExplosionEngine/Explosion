@@ -5,7 +5,8 @@
 #pragma once
 
 #include <Common/Memory.h>
-#include <Editor/SceneClient.h>
+#include <Core/Uri.h>
+#include <Runtime/World.h>
 #include <Mirror/Mirror.h>
 
 namespace Editor {
@@ -14,7 +15,9 @@ namespace Editor {
         EditorContext();
         ~EditorContext();
 
-        SceneClient& GetSceneClient() const;
+        Runtime::World& GetWorld();
+        void OpenProjectLevel();
+        void SaveLevel();
         Runtime::Entity GetSelectedEntity() const;
         bool CanAddComponent(const Runtime::ECRegistry& inRegistry, Runtime::Entity inEntity, Runtime::CompClass inClass) const;
         bool CanRemoveComponent(const Runtime::ECRegistry& inRegistry, Runtime::Entity inEntity, Runtime::CompClass inClass) const;
@@ -24,15 +27,11 @@ namespace Editor {
         void DestroyEntity(Runtime::ECRegistry& inRegistry, Runtime::Entity inEntity);
         bool AddComponent(Runtime::ECRegistry& inRegistry, Runtime::Entity inEntity, Runtime::CompClass inClass);
         bool RemoveComponent(Runtime::ECRegistry& inRegistry, Runtime::Entity inEntity, Runtime::CompClass inClass);
-        bool SetComponentMember(
-            Runtime::ECRegistry& inRegistry,
-            Runtime::Entity inEntity,
-            Runtime::CompClass inClass,
-            const Mirror::MemberVariable& inMemberVariable,
-            const Mirror::Any& inValue);
+        bool SetComponentMember(Runtime::ECRegistry& inRegistry, Runtime::Entity inEntity, Runtime::CompClass inClass, const Mirror::MemberVariable& inMemberVariable, const Mirror::Any& inValue);
 
     private:
-        Common::UniquePtr<SceneClient> sceneClient;
+        Core::Uri levelUri;
+        Runtime::World world;
         Runtime::Entity selectedEntity;
     };
 }

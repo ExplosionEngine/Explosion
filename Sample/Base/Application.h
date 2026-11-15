@@ -56,7 +56,7 @@ protected:
     const std::string& GetApplicationName() const;
     double GetCurrentTimeSeconds() const;
     float GetDeltaTimeSeconds() const;
-    void* GetPlatformWindow() const;
+    void* GetNativeWindowHandle() const;
     uint32_t GetWindowWidth() const;
     uint32_t GetWindowHeight() const;
     bool IsHeadless() const;

@@ -1,21 +1,16 @@
-//
-// Created by johnk on 2025/2/19.
-//
-
 #pragma once
 
-#include <GLFW/glfw3.h>
-#if PLATFORM_WINDOWS
-#define GLFW_EXPOSE_NATIVE_WIN32
-#elif PLATFORM_MACOS
-#define GLFW_EXPOSE_NATIVE_COCOA
-#endif
-#include <GLFW/glfw3native.h>
+#include <string>
 
-#include <Render/RenderModule.h>
+#include <Render/SwapChainSurface.h>
+#include <Runtime/Viewport.h>
 #include <Runtime/Window.h>
 
+struct GLFWwindow;
+
 namespace Launch {
+    class GameClient;
+
     struct GameWindowDesc {
         std::string title;
         uint32_t width;
@@ -24,17 +19,19 @@ namespace Launch {
 
     class GameWindow final : public Runtime::Window {
     public:
-        explicit GameWindow(const GameWindowDesc& inDesc);
+        GameWindow(RHI::Device& inDevice, Render::RenderThread& inRenderThread, GameClient& inClient, const GameWindowDesc& inDesc);
         ~GameWindow() override;
 
-        void Resize(uint32_t inWidth, uint32_t inHeight) override;
-
-        bool ShouldClose() const;
-        void PollEvents() const;
-        void WaitRenderingIdle() const;
+        bool ShouldClose() const override;
+        void RequestClose() const override;
+        void Tick(float inDeltaSeconds) override;
+        void Render(float inDeltaSeconds) override;
+        void WaitIdle() const override;
 
     private:
-        Render::RenderModule& renderModule;
         GLFWwindow* window;
+        Render::RenderThread& renderThread;
+        Common::UniquePtr<Render::SwapChainSurface> swapChainSurface;
+        Common::UniquePtr<Runtime::Viewport> viewport;
     };
 }

@@ -43,23 +43,19 @@ namespace Editor {
     EditorCameraSystem::EditorCameraSystem(Runtime::ECRegistry& inRegistry, const Runtime::SystemSetupContext& inContext)
         : System(inRegistry, inContext)
     {
-        registry.GEmplace<EditorCameraInput>();
     }
 
-    EditorCameraSystem::~EditorCameraSystem()
-    {
-        registry.GRemove<EditorCameraInput>();
-    }
+    EditorCameraSystem::~EditorCameraSystem() = default;
 
     void EditorCameraSystem::Tick(float inDeltaTimeSeconds)
     {
-        auto& input = registry.GGet<EditorCameraInput>();
-        const Common::FVec2 moveInput = input.looking ? Internal::GetMoveInput(input) : Common::FVec2Consts::zero;
-        const bool moving = moveInput.x != 0.0f || moveInput.y != 0.0f;
-        const bool looking = input.looking && (input.lookDelta.x != 0.0f || input.lookDelta.y != 0.0f);
-
-        registry.View<EditorCameraController, Runtime::WorldTransform>().Each(
-            [&](Runtime::Entity entity, EditorCameraController& controller, Runtime::WorldTransform& worldTransform) -> void {
+        registry.View<EditorCameraController, EditorCameraInput, Runtime::WorldTransform>().Each(
+            [&](Runtime::Entity entity, EditorCameraController& controller, EditorCameraInput& input, Runtime::WorldTransform& worldTransform) -> void {
+                const Common::FVec2 moveInput = input.looking ? Internal::GetMoveInput(input) : Common::FVec2Consts::zero;
+                const bool moving = moveInput.x != 0.0f || moveInput.y != 0.0f;
+                const bool looking = input.looking && (input.lookDelta.x != 0.0f || input.lookDelta.y != 0.0f);
+                const auto lookDelta = input.lookDelta;
+                input.lookDelta = Common::FVec2Consts::zero;
                 if (!controller.anglesInitialized) {
                     const auto forward = worldTransform.localToWorld.GetRotationMatrix().Col(0);
                     controller.yaw = std::atan2(-forward.y, forward.x);
@@ -69,8 +65,8 @@ namespace Editor {
                 }
 
                 if (looking) {
-                    controller.yaw -= input.lookDelta.x * Internal::cameraLookSpeedDegrees * Internal::degToRad;
-                    controller.pitch -= input.lookDelta.y * Internal::cameraLookSpeedDegrees * Internal::degToRad;
+                    controller.yaw -= lookDelta.x * Internal::cameraLookSpeedDegrees * Internal::degToRad;
+                    controller.pitch -= lookDelta.y * Internal::cameraLookSpeedDegrees * Internal::degToRad;
                     const float maxPitch = Internal::maxCameraPitchDegrees * Internal::degToRad;
                     controller.pitch = std::clamp(controller.pitch, -maxPitch, maxPitch);
                 }
@@ -90,7 +86,5 @@ namespace Editor {
                     transform.localToWorld.rotation = orientation;
                 });
             });
-
-        input.lookDelta = Common::FVec2Consts::zero;
     }
 }

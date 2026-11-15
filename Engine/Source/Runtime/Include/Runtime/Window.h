@@ -1,55 +1,23 @@
-//
-// Created by johnk on 2026/7/8.
-//
-
 #pragma once
 
-#include <vector>
-
-#include <Common/Memory.h>
-#include <RHI/RHI.h>
-#include <Runtime/RenderSurface.h>
+#include <Common/Utility.h>
+#include <Runtime/Api.h>
 
 namespace Runtime {
-    class RUNTIME_API Window : public RenderSurface {
+    class RUNTIME_API Window {
     public:
-        ~Window() override;
+        virtual ~Window();
 
-        RHI::Texture* GetTexture() const override;
-        RHI::TextureView* GetRenderTargetView() const override;
-        void Resize(uint32_t inWidth, uint32_t inHeight) override;
-        void AcquireBackTexture();
-        void Present();
-        RHI::Device& GetDevice() const;
-        RHI::PixelFormat GetSwapChainFormat() const;
-        RHI::TextureState GetCurrentBackTextureState() const;
-        RHI::Semaphore* GetImageReadySemaphore() const;
-        RHI::Semaphore* GetRenderFinishedSemaphore() const;
-        void WaitRenderingIdle() const;
+        NonCopyable(Window)
+        NonMovable(Window)
+
+        virtual bool ShouldClose() const = 0;
+        virtual void RequestClose() const = 0;
+        virtual void Tick(float inDeltaSeconds) = 0;
+        virtual void Render(float inDeltaSeconds) = 0;
+        virtual void WaitIdle() const = 0;
 
     protected:
-        explicit Window(RHI::Device& inDevice);
-
-        void InitializeSurface(Common::UniquePtr<RHI::Surface> inSurface, uint32_t inWidth, uint32_t inHeight);
-        void DestroySurface();
-
-    private:
-        static constexpr uint8_t swapChainTextureNum = 2;
-
-        void ReleaseSwapChainResources();
-        void RecreateSwapChain(uint32_t inWidth, uint32_t inHeight);
-
-        RHI::Device& device;
-        Common::UniquePtr<RHI::Surface> surface;
-        Common::UniquePtr<RHI::SwapChain> swapChain;
-        std::vector<RHI::Texture*> swapChainTextures;
-        std::vector<Common::UniquePtr<RHI::TextureView>> swapChainTextureViews;
-        std::vector<RHI::TextureState> swapChainTextureStates;
-        Common::UniquePtr<RHI::Semaphore> imageReadySemaphore;
-        std::vector<Common::UniquePtr<RHI::Semaphore>> renderFinishedSemaphores;
-        RHI::PixelFormat swapChainFormat;
-        uint32_t currentBackTextureIndex;
-        uint32_t width;
-        uint32_t height;
+        Window();
     };
 }

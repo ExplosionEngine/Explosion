@@ -9,6 +9,7 @@
 #include <Launch/GameWindow.h>
 #include <Runtime/Engine.h>
 #include <Runtime/GameModule.h>
+#include <Runtime/World.h>
 
 namespace Launch {
     class GameApplication {
@@ -23,8 +24,9 @@ namespace Launch {
         double lastFrameTimeSeconds;
         double thisFrameTimeSeconds;
         float deltaTimeSeconds;
-        Common::UniquePtr<GameWindow> window;
+        Common::UniquePtr<Runtime::World> world;
         Common::UniquePtr<GameClient> client;
+        Common::UniquePtr<Runtime::Window> window;
         Runtime::Engine* engine;
         Runtime::GameModule* gameModule;
     };

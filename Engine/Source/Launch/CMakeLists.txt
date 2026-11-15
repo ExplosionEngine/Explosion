@@ -4,5 +4,6 @@ exp_add_library(
     TYPE STATIC
     SRC ${sources}
     PUBLIC_INC Include
-    PUBLIC_LIB Runtime glfw
+    PUBLIC_LIB Runtime
+    PRIVATE_LIB glfw
 )

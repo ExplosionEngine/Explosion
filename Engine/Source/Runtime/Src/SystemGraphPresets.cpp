@@ -3,7 +3,6 @@
 //
 
 #include <Runtime/System/Player.h>
-#include <Runtime/System/Render.h>
 #include <Runtime/System/Scene.h>
 #include <Runtime/System/Transform.h>
 #include <Runtime/SystemGraphPresets.h>
@@ -20,9 +19,8 @@ namespace Runtime {
             auto& transformGroup = systemGraph.AddGroup("Transform", SystemExecuteStrategy::sequential);
             transformGroup.EmplaceSystem<TransformSystem>();
 
-            auto& sceneRenderingGroup = systemGraph.AddGroup("SceneRendering", SystemExecuteStrategy::sequential);
-            sceneRenderingGroup.EmplaceSystem<SceneSystem>();
-            sceneRenderingGroup.EmplaceSystem<RenderSystem>();
+            auto& sceneGroup = systemGraph.AddGroup("Scene", SystemExecuteStrategy::sequential);
+            sceneGroup.EmplaceSystem<SceneSystem>();
 
             return systemGraph;
         }();
