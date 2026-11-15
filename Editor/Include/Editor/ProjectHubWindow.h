@@ -3,19 +3,19 @@
 #include <string>
 #include <vector>
 
+#include <Editor/ImGui/ImGuiWindow.h>
 #include <Editor/Project/ProjectLauncher.h>
 #include <Editor/Project/ProjectService.h>
 #include <Editor/Project/RecentProjectStore.h>
 
 namespace Editor {
-    class ProjectHubFrame final {
+    class ProjectHubWindow final : public ImGuiWindow {
     public:
-        ProjectHubFrame(ProjectService& inProjectService, RecentProjectStore& inRecentProjects, ProjectLauncher& inProjectLauncher);
-        ~ProjectHubFrame();
-
-        bool Render();
+        ProjectHubWindow(ProjectService& inProjectService, RecentProjectStore& inRecentProjects, ProjectLauncher& inProjectLauncher);
+        ~ProjectHubWindow() override;
 
     private:
+        void RenderContents() override;
         void RenderActionBar();
         void RenderRecentProjects();
         void RenderCreateProjectPopup();
@@ -29,6 +29,5 @@ namespace Editor {
         std::string directory;
         int selectedTemplateIndex;
         std::string statusMessage;
-        bool requestClose;
     };
 }

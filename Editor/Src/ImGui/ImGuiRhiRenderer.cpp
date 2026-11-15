@@ -42,12 +42,13 @@ namespace Editor::ImGuiRendering::Internal {
 }
 
 namespace Editor {
-    ImGuiRhiRenderer::ImGuiRhiRenderer(Runtime::Window& inWindow, Render::RenderThread& inRenderThread)
-        : window(inWindow)
+    ImGuiRhiRenderer::ImGuiRhiRenderer(RHI::Device& inDevice, Render::RenderSurface& inSurface, Render::RenderThread& inRenderThread)
+        : device(inDevice)
+        , surface(inSurface)
         , renderThread(inRenderThread)
-        , pipelineFormat(window.GetSwapChainFormat())
-        , uiFrameFence(window.GetDevice().CreateFence(true))
-        , uiCommandBuffer(window.GetDevice().CreateCommandBuffer(RHI::QueueType::graphics))
+        , pipelineFormat(surface.GetFormat())
+        , uiFrameFence(device.CreateFence(true))
+        , uiCommandBuffer(device.CreateCommandBuffer(RHI::QueueType::graphics))
         , imguiVertexBufferCapacity(0)
         , imguiIndexBufferCapacity(0)
     {
@@ -67,9 +68,9 @@ namespace Editor {
 
     void ImGuiRhiRenderer::NewFrame()
     {
-        if (pipelineFormat != window.GetSwapChainFormat()) {
+        if (pipelineFormat != surface.GetFormat()) {
             WaitIdle();
-            pipelineFormat = window.GetSwapChainFormat();
+            pipelineFormat = surface.GetFormat();
             CreateImGuiDeviceObjects();
         }
     }
@@ -85,40 +86,43 @@ namespace Editor {
     void ImGuiRhiRenderer::WaitIdle() const
     {
         renderThread.Flush();
-        window.WaitRenderingIdle();
+        WaitForPreviousFrame();
     }
 
     void ImGuiRhiRenderer::RenderFrame(const Common::SharedPtr<ImGuiDrawData>& inDrawData)
     {
-        uiFrameFence->Wait();
+        WaitForPreviousFrame();
         inFlightDrawData = inDrawData;
-        window.AcquireBackTexture();
         uiFrameFence->Reset();
 
-        RenderUiPass(inFlightDrawData->Get());
-        window.GetDevice().GetQueue(RHI::QueueType::graphics, 0)->Submit(
-            uiCommandBuffer.Get(),
-            RHI::QueueSubmitInfo()
-                .AddWaitSemaphore(window.GetImageReadySemaphore())
-                .AddSignalSemaphore(window.GetRenderFinishedSemaphore())
-                .SetSignalFence(uiFrameFence.Get()));
-        window.Present();
+        const auto target = surface.GetRenderTarget();
+        RenderUiPass(inFlightDrawData->Get(), target);
+        RHI::QueueSubmitInfo submitInfo;
+        submitInfo.SetSignalFence(uiFrameFence.Get());
+        if (target.waitSemaphore != nullptr) {
+            submitInfo.AddWaitSemaphore(target.waitSemaphore);
+        }
+        if (target.signalSemaphore != nullptr) {
+            submitInfo.AddSignalSemaphore(target.signalSemaphore);
+        }
+        device.GetQueue(RHI::QueueType::graphics, 0)->Submit(uiCommandBuffer.Get(), submitInfo);
     }
 
-    void ImGuiRhiRenderer::RenderUiPass(ImDrawData& inDrawData)
+    void ImGuiRhiRenderer::WaitForPreviousFrame() const
     {
-        auto* target = window.GetTexture();
-        auto* targetView = window.GetRenderTargetView();
-        Assert(target != nullptr && targetView != nullptr);
+        uiFrameFence->Wait();
+    }
 
+    void ImGuiRhiRenderer::RenderUiPass(ImDrawData& inDrawData, const Render::SurfaceTarget& inTarget)
+    {
         const auto recorder = uiCommandBuffer->Begin();
-        recorder->ResourceBarrier(RHI::Barrier::Transition(target, window.GetCurrentBackTextureState(), RHI::TextureState::renderTarget));
+        recorder->ResourceBarrier(RHI::Barrier::Transition(inTarget.texture, inTarget.beforeRenderState, RHI::TextureState::renderTarget));
         const auto rasterRecorder = recorder->BeginRasterPass(
             RHI::RasterPassBeginInfo()
-                .AddColorAttachment(RHI::ColorAttachment(targetView, RHI::LoadOp::clear, RHI::StoreOp::store, ImGuiRendering::Internal::uiOnlyClearColor)));
+                .AddColorAttachment(RHI::ColorAttachment(inTarget.renderTargetView, RHI::LoadOp::clear, RHI::StoreOp::store, ImGuiRendering::Internal::uiOnlyClearColor)));
         RenderImGuiDrawData(inDrawData, *rasterRecorder);
         rasterRecorder->EndPass();
-        recorder->ResourceBarrier(RHI::Barrier::Transition(target, RHI::TextureState::renderTarget, RHI::TextureState::present));
+        recorder->ResourceBarrier(RHI::Barrier::Transition(inTarget.texture, RHI::TextureState::renderTarget, inTarget.afterRenderState));
         recorder->End();
     }
 
@@ -202,7 +206,6 @@ namespace Editor {
 
     void ImGuiRhiRenderer::CreateImGuiDeviceObjects()
     {
-        RHI::Device& device = window.GetDevice();
         imguiFrameTextureBindGroups.clear();
         imguiVertexShaderCompileOutput = ImGuiRendering::Internal::CompileImGuiShader(device, "VSMain", RHI::ShaderStageBits::sVertex);
         imguiPixelShaderCompileOutput = ImGuiRendering::Internal::CompileImGuiShader(device, "PSMain", RHI::ShaderStageBits::sPixel);
@@ -234,7 +237,7 @@ namespace Editor {
 
         const RHI::BlendComponent colorBlend(RHI::BlendOp::opAdd, RHI::BlendFactor::srcAlpha, RHI::BlendFactor::oneMinusSrcAlpha);
         const RHI::BlendComponent alphaBlend(RHI::BlendOp::opAdd, RHI::BlendFactor::one, RHI::BlendFactor::oneMinusSrcAlpha);
-        const RHI::ColorTargetState colorTarget(window.GetSwapChainFormat(), RHI::ColorWriteBits::all, true, colorBlend, alphaBlend);
+        const RHI::ColorTargetState colorTarget(surface.GetFormat(), RHI::ColorWriteBits::all, true, colorBlend, alphaBlend);
 
         imguiPipeline = device.CreateRasterPipeline(
             RHI::RasterPipelineCreateInfo(imguiPipelineLayout.Get())
@@ -254,7 +257,6 @@ namespace Editor {
 
     void ImGuiRhiRenderer::CreateImGuiFontTexture()
     {
-        RHI::Device& device = window.GetDevice();
 
         unsigned char* pixels = nullptr;
         int width = 0;
@@ -334,7 +336,6 @@ namespace Editor {
 
     void ImGuiRhiRenderer::CreateImGuiDynamicBuffers(int inVertexCount, int inIndexCount)
     {
-        RHI::Device& device = window.GetDevice();
         imguiVertexBufferCapacity = std::max(1, inVertexCount);
         imguiIndexBufferCapacity = std::max(1, inIndexCount);
 
@@ -400,7 +401,7 @@ namespace Editor {
             return iter->second.Get();
         }
 
-        auto bindGroup = window.GetDevice().CreateBindGroup(
+        auto bindGroup = device.CreateBindGroup(
             RHI::BindGroupCreateInfo(imguiBindGroupLayout.Get(), "imguiBindGroup")
                 .AddEntry(RHI::BindGroupEntry(imguiPixelShaderCompileOutput.reflectionData.QueryResourceBindingChecked("imageTex").second, RHI::ShaderStageBits::sPixel, &inTextureView))
                 .AddEntry(RHI::BindGroupEntry(imguiPixelShaderCompileOutput.reflectionData.QueryResourceBindingChecked("imageSampler").second, RHI::ShaderStageBits::sPixel, imguiImageSampler.Get()))

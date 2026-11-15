@@ -10,10 +10,11 @@
 
 #include <Common/Utility.h>
 #include <Runtime/ECS.h>
-#include <Runtime/Client.h>
 #include <Runtime/Asset/Level.h>
 
 namespace Runtime {
+    class Viewport;
+
     enum class PlayStatus : uint8_t {
         stopped,
         playing,
@@ -27,7 +28,7 @@ namespace Runtime {
         NonMovable(World)
         ~World();
 
-        World(std::string inName, Client* inClient, PlayType inPlayType);
+        World(std::string inName, PlayType inPlayType);
         void SetSystemGraph(const SystemGraph& inSystemGraph);
         Runtime::PlayStatus PlayStatus() const;
         bool Stopped() const;
@@ -46,6 +47,7 @@ namespace Runtime {
 
     private:
         friend class Engine;
+        friend class Viewport;
 
         void Tick(float inDeltaTimeSeconds);
 

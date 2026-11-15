@@ -1791,7 +1791,6 @@ namespace Runtime {
 
     SystemSetupContext::SystemSetupContext()
         : playType(PlayType::max)
-        , client(nullptr)
     {
     }
 

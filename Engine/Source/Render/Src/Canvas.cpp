@@ -4,16 +4,16 @@
 
 #include <algorithm>
 
-#include <Runtime/Canvas.h>
+#include <Render/Canvas.h>
 
-namespace Runtime::Internal {
+namespace Render::CanvasResources::Internal {
     static uint32_t ClampExtent(uint32_t inValue)
     {
         return std::max(1u, inValue);
     }
 }
 
-namespace Runtime {
+namespace Render {
     CanvasDesc::CanvasDesc()
         : width(1)
         , height(1)
@@ -24,8 +24,8 @@ namespace Runtime {
 
     Canvas::Canvas(RHI::Device& inDevice, const CanvasDesc& inDesc)
         : device(inDevice)
-        , width(Internal::ClampExtent(inDesc.width))
-        , height(Internal::ClampExtent(inDesc.height))
+        , width(CanvasResources::Internal::ClampExtent(inDesc.width))
+        , height(CanvasResources::Internal::ClampExtent(inDesc.height))
         , format(inDesc.format)
         , debugName(inDesc.debugName)
     {
@@ -34,14 +34,14 @@ namespace Runtime {
 
     Canvas::~Canvas() = default;
 
-    RHI::Texture* Canvas::GetTexture() const
+    SurfaceTarget Canvas::GetRenderTarget() const
     {
-        return texture.Get();
-    }
-
-    RHI::TextureView* Canvas::GetRenderTargetView() const
-    {
-        return renderTargetView.Get();
+        return {
+            .texture = texture.Get(),
+            .renderTargetView = renderTargetView.Get(),
+            .beforeRenderState = RHI::TextureState::shaderReadOnly,
+            .afterRenderState = RHI::TextureState::shaderReadOnly
+        };
     }
 
     RHI::TextureView* Canvas::GetTextureView() const
@@ -49,10 +49,20 @@ namespace Runtime {
         return textureView.Get();
     }
 
+    Common::UVec2 Canvas::GetSize() const
+    {
+        return { width, height };
+    }
+
+    RHI::PixelFormat Canvas::GetFormat() const
+    {
+        return format;
+    }
+
     void Canvas::Resize(uint32_t inWidth, uint32_t inHeight)
     {
-        const uint32_t newWidth = Internal::ClampExtent(inWidth);
-        const uint32_t newHeight = Internal::ClampExtent(inHeight);
+        const uint32_t newWidth = CanvasResources::Internal::ClampExtent(inWidth);
+        const uint32_t newHeight = CanvasResources::Internal::ClampExtent(inHeight);
         if (newWidth == width && newHeight == height) {
             return;
         }

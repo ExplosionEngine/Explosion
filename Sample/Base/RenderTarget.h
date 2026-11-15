@@ -38,7 +38,7 @@ protected:
 class SwapChainRenderTarget final : public SampleRenderTarget {
 public:
     NonCopyable(SwapChainRenderTarget)
-    SwapChainRenderTarget(RHI::Device& inDevice, uint32_t inWidth, uint32_t inHeight, void* inPlatformWindow);
+    SwapChainRenderTarget(RHI::Device& inDevice, uint32_t inWidth, uint32_t inHeight, void* inNativeWindowHandle);
     ~SwapChainRenderTarget() override;
 
     void Initialize() override;

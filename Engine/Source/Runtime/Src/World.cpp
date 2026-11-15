@@ -8,7 +8,7 @@
 #include <utility>
 
 namespace Runtime {
-    World::World(std::string inName, Client* inClient, PlayType inPlayType)
+    World::World(std::string inName, PlayType inPlayType)
         : name(std::move(inName))
         , playStatus(PlayStatus::stopped)
         , systemSetupContext()
@@ -16,7 +16,6 @@ namespace Runtime {
         EngineHolder::Get().MountWorld(this);
 
         systemSetupContext.playType = inPlayType;
-        systemSetupContext.client = inClient;
     }
 
     World::~World()

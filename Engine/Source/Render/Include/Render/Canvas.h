@@ -8,10 +8,10 @@
 
 #include <Common/Memory.h>
 #include <RHI/RHI.h>
-#include <Runtime/RenderSurface.h>
+#include <Render/RenderSurface.h>
 
-namespace Runtime {
-    struct RUNTIME_API CanvasDesc {
+namespace Render {
+    struct CanvasDesc {
         CanvasDesc();
 
         uint32_t width;
@@ -20,13 +20,14 @@ namespace Runtime {
         std::string debugName;
     };
 
-    class RUNTIME_API Canvas : public RenderSurface {
+    class Canvas final : public RenderSurface {
     public:
         Canvas(RHI::Device& inDevice, const CanvasDesc& inDesc);
         ~Canvas() override;
 
-        RHI::Texture* GetTexture() const override;
-        RHI::TextureView* GetRenderTargetView() const override;
+        SurfaceTarget GetRenderTarget() const override;
+        Common::UVec2 GetSize() const override;
+        RHI::PixelFormat GetFormat() const override;
         RHI::TextureView* GetTextureView() const;
         void Resize(uint32_t inWidth, uint32_t inHeight) override;
 

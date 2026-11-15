@@ -7,6 +7,7 @@
 #include <Core/Cmdline.h>
 #include <RHI/Instance.h>
 #include <Runtime/Engine.h>
+#include <Runtime/SystemGraphPresets.h>
 #include <Runtime/Settings/Registry.h>
 #include <Runtime/Settings/Game.h>
 
@@ -42,25 +43,29 @@ namespace Launch {
         windowDesc.title = gameModule->GetGameName();
         windowDesc.width = 1024;
         windowDesc.height = 768;
-        window = Common::MakeUnique<GameWindow>(windowDesc);
-        client = Common::MakeUnique<GameClient>(*window);
+        auto& renderModule = engine->GetRenderModule();
+        world = Common::MakeUnique<Runtime::World>("GameWorld", Runtime::PlayType::game);
+        world->SetSystemGraph(Runtime::SystemGraphPresets::Default3DWorld());
+        client = Common::MakeUnique<GameClient>(*world);
+        window.Reset(new GameWindow(*renderModule.GetDevice(), renderModule.GetRenderThread(), *client, windowDesc));
 
         auto& settingRegistry = Runtime::SettingsRegistry::Get();
         settingRegistry.LoadAllSettings();
 
         const auto& gameSettings = Runtime::SettingsRegistry::Get().GetSettings<Runtime::GameSettings>();
         const auto startupLevel = Runtime::AssetManager::Get().SyncLoad<Runtime::Level>(gameSettings.gameStartupLevel, Runtime::Level::GetStaticClass());
-        client->GetWorld().LoadFrom(startupLevel);
-        client->GetWorld().Play();
+        world->LoadFrom(startupLevel);
+        world->Play();
     }
 
     GameApplication::~GameApplication()
     {
-        if (client.Valid() && !client->GetWorld().Stopped()) {
-            client->GetWorld().Stop();
+        window.Reset();
+        if (!world->Stopped()) {
+            world->Stop();
         }
         client.Reset();
-        window.Reset();
+        world.Reset();
         Runtime::EngineHolder::Unload();
     }
 
@@ -71,7 +76,6 @@ namespace Launch {
         lastFrameTimeSeconds = thisFrameTimeSeconds;
 
         engine->Tick(deltaTimeSeconds);
-        window->PollEvents();
     }
 
     bool GameApplication::ShouldClose() const

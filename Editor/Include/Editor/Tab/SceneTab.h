@@ -2,22 +2,17 @@
 
 #include <Editor/Tab/EditorTab.h>
 
-namespace Runtime {
-    class Canvas;
-}
-
 namespace Editor {
-    class SceneClient;
+    class SceneViewport;
 
     class SceneTab final : public EditorTab {
     public:
-        SceneTab(SceneClient& inSceneClient, Runtime::Canvas& inCanvas);
+        explicit SceneTab(SceneViewport& inViewport);
 
     private:
         void RenderContents() override;
         void OnHidden() override;
 
-        SceneClient& sceneClient;
-        Runtime::Canvas& canvas;
+        SceneViewport& viewport;
     };
 }

@@ -13,6 +13,7 @@
 
 namespace Runtime {
     class World;
+    class Window;
 
     struct RUNTIME_API EngineInitParams {
         EngineInitParams();
@@ -32,6 +33,8 @@ namespace Runtime {
 
         void MountWorld(World* inWorld);
         void UnmountWorld(World* inWorld);
+        void MountWindow(Window* inWindow);
+        void UnmountWindow(Window* inWindow);
         Render::RenderModule& GetRenderModule() const;
         void Tick(float inDeltaTimeSeconds);
 
@@ -44,6 +47,7 @@ namespace Runtime {
         void LoadConfigs() const;
 
         std::unordered_set<World*> worlds;
+        std::unordered_set<Window*> windows;
         Render::RenderModule* renderModule;
         std::future<void> lastFrameRenderThreadFence;
         std::future<void> last2FrameRenderThreadFence;

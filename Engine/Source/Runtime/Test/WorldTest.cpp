@@ -105,7 +105,7 @@ TEST_F(WorldTest, BasicTest)
     auto& mainGroup = systemGraph.AddGroup("MainGroup", SystemExecuteStrategy::sequential);
     mainGroup.EmplaceSystemDyn(&BasicTest_MotionSystem::GetStaticClass());
 
-    World world("TestWorld", nullptr, PlayType::game);
+    World world("TestWorld", PlayType::game);
     world.SetSystemGraph(systemGraph);
     world.Play();
     for (auto i = 0; i < 5; i++) {
@@ -117,7 +117,7 @@ TEST_F(WorldTest, BasicTest)
 #if BUILD_EDITOR
 TEST_F(WorldTest, EditorAccessMutatesEditorWorldImmediately)
 {
-    World world("EditorWorld", nullptr, PlayType::editor);
+    World world("EditorWorld", PlayType::editor);
     Entity editedEntity = entityNull;
 
     world.EditorAccess([&](ECRegistry& registry) -> void {
@@ -189,7 +189,7 @@ TEST_F(WorldTest, ConcurrentTest)
     auto& verifyGroup = systemGraph.AddGroup("VerifyGroup", SystemExecuteStrategy::sequential);
     verifyGroup.EmplaceSystem<ConcurrentTest_VerifySystem>();
 
-    World world("TestWorld", nullptr, PlayType::game);
+    World world("TestWorld", PlayType::game);
     world.SetSystemGraph(systemGraph);
     world.Play();
     for (auto i = 0; i < 5; i++) {

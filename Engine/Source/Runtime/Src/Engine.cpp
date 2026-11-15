@@ -14,6 +14,7 @@
 #include <Runtime/GameThread.h>
 #include <Runtime/Settings/Registry.h>
 #include <Runtime/World.h>
+#include <Runtime/Window.h>
 
 namespace Runtime {
     EngineInitParams::EngineInitParams()
@@ -60,6 +61,16 @@ namespace Runtime {
         worlds.erase(inWorld);
     }
 
+    void Engine::MountWindow(Window* inWindow)
+    {
+        windows.emplace(inWindow);
+    }
+
+    void Engine::UnmountWindow(Window* inWindow)
+    {
+        windows.erase(inWindow);
+    }
+
     Render::RenderModule& Engine::GetRenderModule() const
     {
         return *renderModule;
@@ -81,6 +92,10 @@ namespace Runtime {
             renderModule->BeginFrame();
         });
 
+        for (auto* window : windows) {
+            window->Tick(inDeltaTimeSeconds);
+        }
+
         for (auto* world : worlds) {
             if (!world->ShouldTick()) {
                 continue;
@@ -89,8 +104,13 @@ namespace Runtime {
         }
 
         GameThread::Get().Flush();
+
+        for (auto* window : windows) {
+            window->Render(inDeltaTimeSeconds);
+        }
+
         last2FrameRenderThreadFence = std::move(lastFrameRenderThreadFence);
-        lastFrameRenderThreadFence = renderThread.EmplaceTask([]() -> void {});
+        lastFrameRenderThreadFence = renderModule->GetRenderThread().EmplaceTask([]() -> void {});
     }
 
     void Engine::AttachLogFile() const // NOLINT

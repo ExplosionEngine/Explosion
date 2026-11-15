@@ -6,7 +6,8 @@
 #include <Common/Memory.h>
 #include <Render/RenderThread.h>
 #include <Render/ShaderCompiler.h>
-#include <Runtime/Window.h>
+#include <Render/RenderSurface.h>
+#include <RHI/RHI.h>
 
 struct ImDrawData;
 
@@ -22,7 +23,7 @@ namespace Editor {
 
     class ImGuiRhiRenderer final {
     public:
-        ImGuiRhiRenderer(Runtime::Window& inWindow, Render::RenderThread& inRenderThread);
+        ImGuiRhiRenderer(RHI::Device& inDevice, Render::RenderSurface& inSurface, Render::RenderThread& inRenderThread);
         ~ImGuiRhiRenderer();
 
         NonCopyable(ImGuiRhiRenderer)
@@ -31,10 +32,11 @@ namespace Editor {
         void NewFrame();
         void Submit(const ImDrawData& inDrawData);
         void WaitIdle() const;
+        void WaitForPreviousFrame() const;
 
     private:
         void RenderFrame(const Common::SharedPtr<ImGuiDrawData>& inDrawData);
-        void RenderUiPass(ImDrawData& inDrawData);
+        void RenderUiPass(ImDrawData& inDrawData, const Render::SurfaceTarget& inTarget);
         void RenderImGuiDrawData(ImDrawData& inDrawData, RHI::RasterPassCommandRecorder& inRecorder);
         void CreateImGuiDeviceObjects();
         void CreateImGuiFontTexture();
@@ -43,7 +45,8 @@ namespace Editor {
         void UpdateImGuiPassParams(const ImDrawData& inDrawData);
         RHI::BindGroup* GetOrCreateImGuiTextureBindGroup(RHI::TextureView& inTextureView);
 
-        Runtime::Window& window;
+        RHI::Device& device;
+        Render::RenderSurface& surface;
         Render::RenderThread& renderThread;
         RHI::PixelFormat pipelineFormat;
         Common::SharedPtr<ImGuiDrawData> inFlightDrawData;

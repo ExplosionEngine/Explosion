@@ -256,7 +256,7 @@ float Application::GetDeltaTimeSeconds() const
     return deltaTimeSeconds;
 }
 
-void* Application::GetPlatformWindow() const
+void* Application::GetNativeWindowHandle() const
 {
 #if PLATFORM_WINDOWS
     return glfwGetWin32Window(window);
@@ -323,7 +323,7 @@ UniquePtr<SampleRenderTarget> Application::CreateRenderTarget(RHI::Device& devic
     if (headless) {
         return new HeadlessRenderTarget(device, windowExtent.x, windowExtent.y, outputPath);
     }
-    return new SwapChainRenderTarget(device, windowExtent.x, windowExtent.y, GetPlatformWindow());
+    return new SwapChainRenderTarget(device, windowExtent.x, windowExtent.y, GetNativeWindowHandle());
 }
 
 Application::ShaderCompileOutput Application::CompileShader(const std::string& fileName, const std::string& entryPoint, RHI::ShaderStageBits shaderStage, std::vector<std::string> includePaths) const

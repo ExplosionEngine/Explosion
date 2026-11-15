@@ -9,7 +9,7 @@
 #include <imgui_stdlib.h>
 
 #include <Editor/EditorLog.h>
-#include <Editor/Frame/ProjectHubFrame.h>
+#include <Editor/ProjectHubWindow.h>
 #include <Editor/Utils/PlatformUtils.h>
 #include <Editor/Widget/IconWidgets.h>
 #include <Editor/Widget/TablerIcons.h>
@@ -42,12 +42,12 @@ namespace Editor::ProjectHub::Internal {
 }
 
 namespace Editor {
-    ProjectHubFrame::ProjectHubFrame(ProjectService& inProjectService, RecentProjectStore& inRecentProjects, ProjectLauncher& inProjectLauncher)
-        : projectService(inProjectService)
+    ProjectHubWindow::ProjectHubWindow(ProjectService& inProjectService, RecentProjectStore& inRecentProjects, ProjectLauncher& inProjectLauncher)
+        : ImGuiWindow(ImGuiWindowDesc { .title = "Explosion Project Hub", .width = 560, .height = 720 })
+        , projectService(inProjectService)
         , recentProjects(inRecentProjects)
         , projectLauncher(inProjectLauncher)
         , selectedTemplateIndex(0)
-        , requestClose(false)
     {
         auto templatesResult = projectService.ListTemplates();
         if (templatesResult.IsOk()) {
@@ -63,9 +63,9 @@ namespace Editor {
         }
     }
 
-    ProjectHubFrame::~ProjectHubFrame() = default;
+    ProjectHubWindow::~ProjectHubWindow() = default;
 
-    bool ProjectHubFrame::Render()
+    void ProjectHubWindow::RenderContents()
     {
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -87,10 +87,9 @@ namespace Editor {
         RenderRecentProjects();
         RenderCreateProjectPopup();
         ImGui::End();
-        return requestClose;
     }
 
-    void ProjectHubFrame::RenderActionBar()
+    void ProjectHubWindow::RenderActionBar()
     {
         const float spacing = ImGui::GetStyle().ItemSpacing.x;
         const float buttonWidth = (ImGui::GetContentRegionAvail().x - spacing) * 0.5f;
@@ -109,7 +108,7 @@ namespace Editor {
         }
     }
 
-    void ProjectHubFrame::RenderRecentProjects()
+    void ProjectHubWindow::RenderRecentProjects()
     {
         const std::string recentProjectsLabel = Widgets::Label(Icons::Tabler::folder, "Recent projects");
         ImGui::TextUnformatted(recentProjectsLabel.c_str());
@@ -153,7 +152,7 @@ namespace Editor {
         }
     }
 
-    void ProjectHubFrame::RenderCreateProjectPopup()
+    void ProjectHubWindow::RenderCreateProjectPopup()
     {
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
@@ -246,7 +245,7 @@ namespace Editor {
         ImGui::PopStyleVar(4);
     }
 
-    void ProjectHubFrame::OpenProject(const Common::Path& inProjectPath)
+    void ProjectHubWindow::OpenProject(const Common::Path& inProjectPath)
     {
         const auto project = ProjectService::ValidateProject(inProjectPath);
         if (project.IsErr()) {
@@ -261,6 +260,6 @@ namespace Editor {
             return;
         }
         statusMessage.clear();
-        requestClose = true;
+        RequestClose();
     }
 }

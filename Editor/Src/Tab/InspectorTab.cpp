@@ -44,7 +44,7 @@ namespace Editor {
 
     void InspectorTab::RenderContents()
     {
-        context.GetSceneClient().GetWorld().EditorAccess([this](Runtime::ECRegistry& inRegistry) -> void {
+        context.GetWorld().EditorAccess([this](Runtime::ECRegistry& inRegistry) -> void {
             RenderComponents(inRegistry);
         });
     }

@@ -30,7 +30,6 @@ namespace Runtime {
     using SystemClass = const Mirror::Class*;
 
     class ECRegistry;
-    class Client;
     struct SystemSetupContext;
 
     template <typename T>
@@ -820,7 +819,6 @@ namespace Runtime {
         SystemSetupContext();
 
         PlayType playType;
-        Client* client;
     };
 
     class SystemGraphExecutor {
